@@ -94,16 +94,21 @@ function StaticPage() {
 
   return (
     <article>
-      <header className="border-border mb-6 border-b pb-5">
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight md:text-4xl">
-          {meta.title}
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">{meta.description}</p>
-        <p className="text-muted-foreground mt-2 text-xs">
-          {m['common.pages.last_updated']()}: {meta.updated_at}
-        </p>
+      {/* Letterboxed title band, the same frame language as the homepage. */}
+      <header className="border-border bg-card border-y">
+        <div className="mx-auto max-w-3xl px-6 py-14 md:px-8 md:py-20">
+          <h1 className="text-foreground font-serif text-5xl leading-[1.02] font-medium tracking-tight md:text-6xl">
+            {meta.title.split(' | ')[0]}
+          </h1>
+          <p className="text-muted-foreground mt-4 max-w-xl text-base">
+            {meta.description}
+          </p>
+          <p className="text-primary mt-4 text-xs font-semibold tracking-[0.14em] uppercase">
+            {m['common.pages.last_updated']()}: {meta.updated_at}
+          </p>
+        </div>
       </header>
-      <div className="text-foreground/90 text-[15px] leading-7">
+      <div className="text-foreground/90 mx-auto max-w-3xl px-6 py-12 text-[16px] leading-7 md:px-8 md:py-16">
         <Suspense fallback={null}>
           <Content />
         </Suspense>

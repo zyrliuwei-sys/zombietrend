@@ -3,10 +3,12 @@ import { SiteHeader } from '@/components/site-header';
 
 export function Header() {
   const navLinks = [
-    { href: '/#features', label: m['landing.nav.features']() },
-    { href: '/pricing', label: m['landing.nav.pricing']() },
-    { href: '/blog', label: m['landing.nav.blog']() },
+    { href: '/#create', label: m['zombie.nav.create']() },
+    { href: '/#how', label: m['zombie.nav.how']() },
+    { href: '/#ideas', label: m['zombie.nav.ideas']() },
+    { href: '/pricing', label: m['zombie.nav.pricing']() },
+    { href: '/#faq', label: m['zombie.nav.faq']() },
   ];
 
-  return <SiteHeader navLinks={navLinks} logoAlt={m['hotel.logo_alt']()} />;
+  return <SiteHeader navLinks={navLinks} logoAlt={m['zombie.logo_alt']()} />;
 }

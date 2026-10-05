@@ -7,16 +7,16 @@ export function Footer() {
     {
       title: m['landing.footer.feature'](),
       links: [
-        { label: m['hotel.nav.create'](), href: '/#create' },
-        { label: m['hotel.nav.how'](), href: '/#how' },
+        { label: m['zombie.nav.create'](), href: '/#create' },
+        { label: m['zombie.nav.how'](), href: '/#how' },
       ],
     },
     {
       title: m['landing.footer.resources'](),
       links: [
         {
-          label: 'support@hotel-lobby.org',
-          href: 'mailto:support@hotel-lobby.org',
+          label: 'support@zombietrend.org',
+          href: 'mailto:support@zombietrend.org',
         },
       ],
     },
@@ -32,7 +32,7 @@ export function Footer() {
 
   return (
     <SiteFooter
-      tagline={m['hotel.footer.line']()}
+      tagline={m['zombie.footer.line']()}
       columns={columns}
       badges={<FooterBadgeList className="mt-10" />}
     />

@@ -1,24 +1,33 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "hotel-lobby-ai",
+  "name": "zombietrend",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true
+  },
   "vars": {
     "DATABASE_PROVIDER": "d1",
-    "VITE_APP_URL": "https://hotel-lobby.org",
-    "VITE_APP_NAME": "Hotel Lobby AI",
-    "VITE_APP_DESCRIPTION": "Plan a two-person Hotel Lobby AI filter video and copy a prompt for an image-to-video studio.",
+    "VITE_APP_URL": "https://zombietrend.org",
+    "VITE_APP_NAME": "ZombieTrend AI",
+    "VITE_APP_DESCRIPTION": "AI zombie love story video generator: turn two photos into the viral zombie hug trend for TikTok, Reels and Shorts.",
     "VITE_APP_LOGO": "/logo.svg",
     "VITE_DEFAULT_LOCALE": "en"
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "hotel-lobby-db",
-      "database_id": "9c9d279e-2929-4b38-9d0f-0259fb6a96dd",
+      "database_name": "zombietrend-ai",
+      "database_id": "5ad62fdf-c81a-4095-a0e6-abda98c25035",
       "migrations_dir": "drizzle"
     }
   ],
-  "triggers": { "crons": ["* * * * *"] },
-  "routes": [{ "pattern": "hotel-lobby.org", "custom_domain": true }]
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "routes": [
+    {
+      "pattern": "zombietrend.org",
+      "custom_domain": true
+    }
+  ]
 }

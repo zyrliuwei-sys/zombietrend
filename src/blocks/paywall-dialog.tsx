@@ -3,7 +3,7 @@ import { Pricing } from '@/blocks/pricing';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 // "Out of credits" dialog for the homepage generator. Its own module so the
-// dialog code is only downloaded once it is first opened (blocks/hotel-lobby).
+// dialog code is only downloaded once it is first opened (blocks/zombie-trend).
 export default function PaywallDialog({
   open,
   onOpenChange,
@@ -14,7 +14,7 @@ export default function PaywallDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto p-6 sm:max-w-5xl">
-        <Pricing variant="dialog" title={m['hotel.paywall.title']()} />
+        <Pricing variant="dialog" title={m['zombie.paywall.title']()} />
       </DialogContent>
     </Dialog>
   );

@@ -30,10 +30,10 @@ function VideosPage() {
   const [page, setPage] = useState(1);
 
   const query = useQuery({
-    queryKey: ['hotel-lobby-videos', page],
+    queryKey: ['zombie-videos', page],
     queryFn: () =>
       apiGet<PageResult<VideoRow>>(
-        `/api/hotel-lobby/videos?page=${page}&pageSize=${PAGE_SIZE}`
+        `/api/zombie/videos?page=${page}&pageSize=${PAGE_SIZE}`
       ),
     placeholderData: keepPreviousData,
     // Unfinished videos keep moving server-side; refresh until they land.
@@ -99,7 +99,7 @@ function VideosPage() {
                 </span>
                 {v.status === 'success' && v.videoUrl ? (
                   <a
-                    href={`/api/hotel-lobby/download?id=${v.id}`}
+                    href={`/api/zombie/download?id=${v.id}`}
                     download
                     className={cn(
                       buttonVariants({ variant: 'outline', size: 'sm' }),

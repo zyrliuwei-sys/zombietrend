@@ -116,13 +116,13 @@ export function PricingTable({
       {/* Group tabs — pill toggle */}
       {groups.length > 1 && (
         <div className="flex justify-center">
-          <div className="border-border bg-muted/40 inline-flex items-center rounded-full border p-1">
+          <div className="border-border bg-muted/40 inline-flex items-center rounded-sm border p-1">
             {groups.map((group) => (
               <button
                 key={group.key}
                 onClick={() => setActiveGroup(group.key)}
                 className={cn(
-                  'rounded-full px-5 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-sm px-5 py-1.5 text-sm font-medium transition-colors',
                   activeGroup === group.key
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -130,7 +130,7 @@ export function PricingTable({
               >
                 {group.label}
                 {group.badge && (
-                  <span className="ml-1.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-semibold text-orange-950">
+                  <span className="bg-primary text-primary-foreground ml-1.5 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold">
                     {group.badge}
                   </span>
                 )}
@@ -155,9 +155,9 @@ export function PricingTable({
           <div
             key={plan.id}
             className={cn(
-              'border-border relative flex flex-col rounded-2xl border p-8 transition-all',
+              'border-border relative flex flex-col rounded-sm border p-8 transition-all',
               plan.highlight && !plan.plainFrame
-                ? 'bg-card border-orange-500 shadow-lg ring-2 shadow-orange-500/20 ring-orange-500'
+                ? 'bg-card border-primary ring-primary ring-1'
                 : plan.featured
                   ? 'bg-card ring-foreground/10 shadow-md ring-1'
                   : 'bg-background hover:border-foreground/30'
@@ -166,9 +166,9 @@ export function PricingTable({
             {plan.badge && (
               <span
                 className={cn(
-                  'absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap',
+                  'absolute -top-3 left-1/2 -translate-x-1/2 rounded-sm px-3 py-1 text-xs font-semibold whitespace-nowrap',
                   plan.highlight
-                    ? 'bg-orange-500 text-orange-950'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-foreground text-background'
                 )}
               >
@@ -208,7 +208,7 @@ export function PricingTable({
             )}
 
             {plan.highlight && (
-              <div className="mb-4 flex items-start gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-3 py-2.5 text-sm font-semibold text-orange-700 dark:text-orange-300">
+              <div className="border-primary/40 bg-primary/10 text-primary mb-4 flex items-start gap-2 rounded-sm border px-3 py-2.5 text-sm font-semibold">
                 <Gift className="mt-0.5 size-4 shrink-0" />
                 <span>{plan.highlight}</span>
               </div>
@@ -217,7 +217,7 @@ export function PricingTable({
             {/* CTA — full-width pill */}
             <Button
               variant={plan.featured || plan.highlight ? 'default' : 'outline'}
-              className="h-10 w-full rounded-full text-sm font-medium"
+              className="h-10 w-full rounded-sm text-sm font-medium"
               onClick={() => handleCheckout(plan)}
               disabled={loadingId === plan.id}
             >

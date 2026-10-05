@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 
 import { useSession } from '@/core/auth/client';
 import { useRouter } from '@/core/i18n/navigation';
-import { duetCredits } from '@/config/hotel-lobby-pricing';
 import { pricingCatalog } from '@/config/pricing';
+import { clipCredits } from '@/config/zombie-pricing';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { currentPathWithQuery } from '@/lib/redirect';
 import { track } from '@/lib/track';
@@ -80,15 +80,15 @@ export function Pricing({
 
   // Live per-video price so "≈ N videos" matches what generation charges.
   const { data: priceData } = useQuery({
-    queryKey: ['hotel-lobby-price'],
+    queryKey: ['zombie-price'],
     queryFn: () =>
       apiGet<{ credits: number; lengths?: Record<string, number> }>(
-        '/api/hotel-lobby/price'
+        '/api/zombie/price'
       ),
     staleTime: 10 * 60_000,
   });
-  const perVideo = priceData?.credits ?? duetCredits();
-  const perLongVideo = priceData?.lengths?.['15'] ?? duetCredits(15);
+  const perVideo = priceData?.credits ?? clipCredits(12);
+  const perLongVideo = priceData?.lengths?.['15'] ?? clipCredits(15);
 
   function features(credits: number, extra: PricingFeature[]) {
     return [
@@ -320,8 +320,8 @@ export function Pricing({
           <h2
             className={
               dialog
-                ? 'font-serif text-2xl font-normal tracking-tight sm:text-3xl'
-                : 'font-serif text-4xl font-normal tracking-tight sm:text-5xl'
+                ? 'font-serif text-3xl font-medium sm:text-4xl'
+                : 'font-serif text-5xl font-medium tracking-tight sm:text-6xl'
             }
           >
             {title ?? m['landing.pricing.title']()}

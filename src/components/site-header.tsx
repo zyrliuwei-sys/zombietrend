@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { LocaleSelector } from '@/components/locale-selector';
 import { SiteUserMenu } from '@/components/site-user-menu';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { buttonVariants } from '@/components/ui/button';
 
 export interface NavLink {
@@ -44,9 +43,9 @@ export function SiteHeader({
             alt={logoAlt}
             width={512}
             height={512}
-            className="size-8 rounded-full"
+            className="size-8 rounded-sm"
           />
-          <span className="text-base font-bold tracking-tight">
+          <span className="font-serif text-xl font-semibold tracking-tight">
             {envConfigs.app_name}
           </span>
         </Link>
@@ -60,7 +59,7 @@ export function SiteHeader({
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                className="text-foreground hover:text-primary text-xs font-semibold tracking-[0.12em] uppercase transition-colors"
               >
                 {link.label}
               </a>
@@ -69,7 +68,7 @@ export function SiteHeader({
                 key={link.href}
                 href={link.href}
                 target={link.external ? '_blank' : undefined}
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                className="text-foreground hover:text-primary text-xs font-semibold tracking-[0.12em] uppercase transition-colors"
               >
                 {link.label}
               </Link>
@@ -80,7 +79,6 @@ export function SiteHeader({
         {/* Desktop actions */}
         <div className="hidden items-center gap-3 md:flex">
           <LocaleSelector />
-          <ThemeToggle />
           {user ? (
             <SiteUserMenu
               name={user.name || 'User'}
@@ -137,7 +135,6 @@ export function SiteHeader({
           </nav>
           <div className="border-border mt-3 flex items-center gap-2 border-t pt-3">
             <LocaleSelector />
-            <ThemeToggle />
             <div className="flex-1" />
             {user ? (
               <SiteUserMenu

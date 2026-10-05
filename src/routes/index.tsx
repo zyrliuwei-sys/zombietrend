@@ -2,15 +2,14 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
 import {
-  HERO_DESKTOP_SIZES,
-  HERO_DESKTOP_WIDTHS,
+  HERO_DESKTOP_IMAGE,
+  HERO_MOBILE_IMAGE,
   HERO_MOBILE_MEDIA,
-  HERO_MOBILE_WIDTHS,
-  optSrcSet,
-} from '@/config/hotel-lobby-images';
+  OG_IMAGE,
+} from '@/config/zombie-images';
 import { m } from '@/paraglide/messages.js';
 import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
-import { HotelLobbyPage } from '@/blocks/hotel-lobby';
+import { ZombieTrendPage } from '@/blocks/zombie-trend';
 
 export const Route = createFileRoute('/')({
   loader: () => ({ locale: getLocale() }),
@@ -32,36 +31,26 @@ export const Route = createFileRoute('/')({
         { property: 'og:type', content: 'website' },
         {
           property: 'og:image',
-          content: `${envConfigs.app_url}/imgs/generated/hotel-lobby-duet.png`,
+          content: `${envConfigs.app_url}${OG_IMAGE}`,
         },
         { name: 'twitter:card', content: 'summary_large_image' },
       ],
       links: [
-        // LCP: the hero <picture> sits behind <source>s, which the browser
-        // only discovers after layout — preload the matching rendition.
+        // LCP: the hero <picture> sits behind a <source>, which the browser
+        // only discovers after layout — preload the matching image.
         {
           rel: 'preload',
           as: 'image',
-          type: 'image/avif',
           media: HERO_MOBILE_MEDIA,
-          imageSrcSet: optSrcSet('hero-mobile', HERO_MOBILE_WIDTHS, 'avif'),
-          imageSizes: '100vw',
+          href: HERO_MOBILE_IMAGE,
           fetchPriority: 'high',
         },
         {
           rel: 'preload',
           as: 'image',
-          type: 'image/avif',
           media: '(min-width: 601px)',
-          imageSrcSet: optSrcSet('hero-desktop', HERO_DESKTOP_WIDTHS, 'avif'),
-          imageSizes: HERO_DESKTOP_SIZES,
+          href: HERO_DESKTOP_IMAGE,
           fetchPriority: 'high',
-        },
-        {
-          rel: 'preload',
-          as: 'image',
-          type: 'image/webp',
-          href: '/imgs/generated/opt/studio-backdrop-960.webp',
         },
         { rel: 'canonical', href: urlFor(locale) },
         ...locales.map((loc) => ({
@@ -81,11 +70,11 @@ export const Route = createFileRoute('/')({
             description,
             url: urlFor(locale),
             inLanguage: locale,
-            primaryImageOfPage: `${envConfigs.app_url}/imgs/generated/hotel-lobby-duet.png`,
+            primaryImageOfPage: `${envConfigs.app_url}${OG_IMAGE}`,
           }),
         },
       ],
     };
   },
-  component: HotelLobbyPage,
+  component: ZombieTrendPage,
 });

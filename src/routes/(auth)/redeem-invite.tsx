@@ -105,7 +105,7 @@ function RedeemInvitePage() {
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <span className="self-center font-serif text-lg italic">
+        <span className="self-center font-serif text-3xl font-semibold tracking-tight">
           {envConfigs.app_name}
         </span>
         <Card>

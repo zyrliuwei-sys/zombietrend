@@ -124,7 +124,7 @@ export default defineConfig({
       srcDirectory: 'src',
     }),
     viteReact(),
-    // Cloudflare cron → /api/hotel-lobby/cron (finishes tasks whose tab closed).
+    // Cloudflare cron → /api/zombie/cron (finishes tasks whose tab closed).
     nitro({ plugins: ['./src/nitro/cron.ts'] }),
   ],
 });

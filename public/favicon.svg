@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <circle cx="256" cy="256" r="252" fill="#191817"/>
-  <circle cx="256" cy="256" r="220" fill="none" stroke="#C88D68" stroke-width="14"/>
-  <path d="M256 93v91m-57 0h114v80c0 32-26 58-57 58s-57-26-57-58v-80Zm57 138v106m-76 0h152" fill="none" stroke="#C88D68" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="512" height="512" fill="#a8231b"/>
+  <text x="50%" y="53%" text-anchor="middle" dominant-baseline="central"
+        font-family="Didot, 'Bodoni 72', Georgia, 'Times New Roman', serif"
+        font-size="420" font-weight="700" fill="#f3eee4">Z</text>
 </svg>

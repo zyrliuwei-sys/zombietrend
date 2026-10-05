@@ -1,44 +1,71 @@
-# Hotel Lobby AI visual identity
+# ZombieTrend AI brand identity: "The Zombie Issue"
 
 ## Design read
 
-A premium consumer video tool for friends and creators. The visual world is a late-night recording room: cinematic stills, restrained movement, warm copper, and editorial typography.
+Reading this as: a premium consumer landing page for TikTok / Reels / Shorts
+creators, in an editorial magazine language (a fashion monthly's special
+issue about the zombie love story trend), leaning toward native CSS, a
+didone serif and printed rules.
 
-## Design dials
+Dials: DESIGN_VARIANCE 7, MOTION_INTENSITY 3, VISUAL_DENSITY 4.
 
-- Variance: 7/10. The full-frame hero carries the composition; the rest stays ordered.
-- Motion: 4/10. One image entrance and one title reveal, with reduced-motion support.
-- Density: 3/10. Generous space around the form and content.
+## Why a magazine
 
-## Color
+Every competitor in the AI-trend space is a dark tool page. A paper-and-ink
+special edition makes ZombieTrend AI recognisable at a glance and treats the
+trend as what it is: a love story told in photographs.
 
-| Role           | Value                  | Usage                         |
-| -------------- | ---------------------- | ----------------------------- |
-| Stage          | `oklch(0.15 0.009 42)` | Site background               |
-| Raised surface | `oklch(0.20 0.012 44)` | Forms and panels              |
-| Warm paper     | `oklch(0.94 0.013 78)` | Main copy                     |
-| Copper         | `oklch(0.73 0.09 57)`  | Primary controls and keylines |
-| Muted text     | `oklch(0.71 0.021 67)` | Supporting copy               |
-| Hairline       | `oklch(0.34 0.019 44)` | Structural borders            |
+## Palette (light-only; same values in `:root` and `.dark`)
 
-The same dark palette applies to the default and optional theme modes to avoid a visual break in this brand.
+| Role      | Hex       | Used for                                  |
+| --------- | --------- | ----------------------------------------- |
+| Paper     | `#f3eee4` | Page background                           |
+| Paper hi  | `#faf7f0` | Cards, prints, form, prompt card          |
+| Paper lo  | `#ebe4d6` | Generator band, image placeholders        |
+| Ink       | `#151413` | Type, strong rules, selected states       |
+| Ink soft  | `#3b3732` | Body copy                                 |
+| Muted     | `#6b655c` | Secondary copy                            |
+| Rule      | `#d3cbbc` | Hairlines between rows / columns          |
+| Blood red | `#a8231b` | The only accent: CTAs, drop cap, numerals |
+
+Page tokens: `src/styles/zombie-trend.css` (`--zt-*`). shadcn tokens in
+`src/styles/globals.css` mirror them (`--primary` = blood red,
+`--radius: 0.125rem`), so pricing, auth, settings, admin and legal match.
 
 ## Type
 
-- Display: Bebas Neue, regular. Use for major campaign statements and section titles.
-- Interface and body: DM Sans Variable, weight 400-750. Use for navigation, forms, and explanations.
-- Chinese fallback: PingFang SC, Microsoft YaHei, sans-serif.
+- Display: Bodoni Moda Variable (nameplate, headlines, italic pull quotes,
+  cover lines, numerals). Chinese falls back to Noto Serif SC / Songti SC.
+- Body / UI: DM Sans Variable. Nav and labels in small caps (uppercase,
+  0.12em tracking).
+- Prompt card: system monospace.
 
-## Imagery and mark
+## Signature
 
-- Film-still photography shows exactly two distinct performers with one central microphone.
-- Warm orange interiors are part of the scene; page chrome remains charcoal and copper.
-- The circular microphone mark uses one fine copper ring and a simple mic silhouette.
-- Avoid neon glows, purple gradients, fake user interfaces, and decorative badges on photos.
+1. The nameplate: "ZombieTrend AI" set full width like a magazine title,
+   with an italic deck between a single and a double rule.
+2. The contact sheet: the four beats as tilted prints, three in black and
+   white and the flashback in colour.
 
-## Components
+Supporting moves: cover lines that link into the page, a two-column article
+with a red drop cap and a centred pull quote, red italic numerals for the
+steps, a ruled comparison table, a recipe-card prompt with a red top band, a
+colophon footer under a double rule.
 
-- Primary buttons: solid copper, dark text, 2px radius.
-- Secondary buttons: copper/brown hairline, light text.
-- Inputs: raised charcoal, visible focus ring, restrained 2px radius.
-- Panels: use spacing and rules before filled cards.
+## Shape and motion
+
+- Square corners everywhere. Printed rules instead of shadows; the only
+  shadows are under the "prints".
+- Motion: the nameplate inks in once; prints straighten on hover; image hover
+  zoom 3%. All off under `prefers-reduced-motion`.
+
+## Logo
+
+Bodoni "Z" in a ruled frame with a red underline (`public/logo.svg`);
+favicon is a paper "Z" on blood red (`public/favicon.svg`).
+
+## Rules
+
+- No em-dashes in any visible copy (en or zh).
+- No dark mode, no gradients, no glow, no pills, no three-equal-card rows.
+- Never show blood, wounds or gore in imagery (the red is typographic only).

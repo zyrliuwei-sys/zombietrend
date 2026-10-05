@@ -636,13 +636,13 @@ export type NewInviteCode = typeof inviteCode.$inferInsert;
 export type UserInvite = typeof userInvite.$inferSelect;
 export type NewUserInvite = typeof userInvite.$inferInsert;
 
-// ─── Hotel Lobby free previews ───────────────────────────────────────────────
-// Anonymous, rate-limited scene stills (step 1 of the duet pipeline). The id
+// ─── Zombie Trend free previews ───────────────────────────────────────────────
+// Anonymous, rate-limited scene stills (step 1 of the clip pipeline). The id
 // is the secret handle the browser keeps; animating one links it to a paid
 // ai_task through `taskId`.
 
-export const hotelPreview = table(
-  'hotel_preview',
+export const zombiePreview = table(
+  'zombie_preview',
   {
     id: text('id').primaryKey(),
     ipHash: text('ip_hash').notNull(),
@@ -658,11 +658,11 @@ export const hotelPreview = table(
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [
-    index('idx_hotel_preview_ip').on(t.ipHash, t.createdAt),
-    index('idx_hotel_preview_device').on(t.deviceId, t.createdAt),
-    index('idx_hotel_preview_created').on(t.createdAt),
+    index('idx_zombie_preview_ip').on(t.ipHash, t.createdAt),
+    index('idx_zombie_preview_device').on(t.deviceId, t.createdAt),
+    index('idx_zombie_preview_created').on(t.createdAt),
   ]
 );
 
-export type HotelPreview = typeof hotelPreview.$inferSelect;
-export type NewHotelPreview = typeof hotelPreview.$inferInsert;
+export type ZombiePreview = typeof zombiePreview.$inferSelect;
+export type NewZombiePreview = typeof zombiePreview.$inferInsert;
