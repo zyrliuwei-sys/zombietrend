@@ -1090,5 +1090,11 @@
   "zombie.samples.mother": "Mother & daughter · kitchen memory",
   "zombie.samples.dog": "Owner & dog · beach memory",
   "zombie.samples.meta": "8 seconds · 720p · with sound · unedited",
-  "zombie.samples.cta": "Preview your own scene free"
+  "zombie.samples.cta": "Preview your own scene free",
+  "zombie.samples.spec_length": "Length",
+  "zombie.samples.spec_quality": "Resolution",
+  "zombie.samples.spec_sound": "Sound",
+  "zombie.samples.spec_sound_value": "On",
+  "zombie.samples.spec_edits": "Edits",
+  "zombie.samples.spec_edits_value": "None"
 }

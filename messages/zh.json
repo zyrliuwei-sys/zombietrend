@@ -1090,5 +1090,11 @@
   "zombie.samples.mother": "母女 · 厨房回忆",
   "zombie.samples.dog": "主人和狗狗 · 海边回忆",
   "zombie.samples.meta": "8 秒 · 720p · 带声音 · 未剪辑",
-  "zombie.samples.cta": "免费预览你自己的画面"
+  "zombie.samples.cta": "免费预览你自己的画面",
+  "zombie.samples.spec_length": "时长",
+  "zombie.samples.spec_quality": "清晰度",
+  "zombie.samples.spec_sound": "声音",
+  "zombie.samples.spec_sound_value": "有",
+  "zombie.samples.spec_edits": "剪辑",
+  "zombie.samples.spec_edits_value": "无"
 }

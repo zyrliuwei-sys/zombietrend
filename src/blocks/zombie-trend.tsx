@@ -871,95 +871,6 @@ export function ZombieTrendPage() {
           </dl>
         </section>
 
-        {exampleVideos.length > 0 && (
-          <section
-            id="samples"
-            className="zt-samples"
-            aria-labelledby="samples-heading"
-          >
-            <header className="zt-head">
-              <p className="zt-kicker">{m['zombie.samples.eyebrow']()}</p>
-              <h2 id="samples-heading">{m['zombie.samples.title']()}</h2>
-              <p className="zt-head-text">
-                {m['zombie.samples.description']()}
-              </p>
-            </header>
-            <ul className="zt-sample-list">
-              {exampleVideos.map((v) => (
-                <li key={v.key} className="zt-sample">
-                  <div className="zt-sample-media">
-                    <video
-                      src={v.src}
-                      poster={v.poster}
-                      controls
-                      playsInline
-                      preload="none"
-                      aria-label={v.label()}
-                      onPlay={() => track('zt_sample_play', { sample: v.key })}
-                    />
-                  </div>
-                  <p className="zt-sample-label">{v.label()}</p>
-                  <p className="zt-sample-meta">{m['zombie.samples.meta']()}</p>
-                </li>
-              ))}
-            </ul>
-            <p className="zt-samples-cta">
-              <a className="zt-button" href="#create">
-                {m['zombie.samples.cta']()}
-              </a>
-            </p>
-          </section>
-        )}
-
-        <section
-          id="story"
-          className="zt-story"
-          aria-labelledby="story-heading"
-        >
-          <header className="zt-head">
-            <p className="zt-kicker">{m['zombie.story.eyebrow']()}</p>
-            <h2 id="story-heading">{m['zombie.story.title']()}</h2>
-            <p className="zt-head-text">{m['zombie.story.description']()}</p>
-          </header>
-          <ol className="zt-contact">
-            {(
-              [
-                [
-                  beatImages.aim,
-                  m['zombie.story.aim.title'],
-                  m['zombie.story.aim.text'],
-                ],
-                [
-                  beatImages.recognise,
-                  m['zombie.story.recognise.title'],
-                  m['zombie.story.recognise.text'],
-                ],
-                [
-                  beatImages.hug,
-                  m['zombie.story.hug.title'],
-                  m['zombie.story.hug.text'],
-                ],
-                [
-                  beatImages.remember,
-                  m['zombie.story.remember.title'],
-                  m['zombie.story.remember.text'],
-                ],
-              ] as const
-            ).map(([src, title, text], i) => (
-              <li
-                key={i}
-                className={i === 3 ? 'zt-shot zt-shot-warm' : 'zt-shot'}
-              >
-                <div className="zt-shot-media">
-                  <OptImage src={src} alt="" width={600} height={760} />
-                </div>
-                <h3>{title()}</h3>
-                <p>{text()}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
         <section id="create" className="zt-create">
           <header className="zt-head">
             <h2>{m['zombie.create.title']()}</h2>
@@ -1210,6 +1121,122 @@ export function ZombieTrendPage() {
               <p>{m['zombie.create.preview_note']()}</p>
             </aside>
           </div>
+        </section>
+
+        {exampleVideos.length > 0 && (
+          <section
+            id="samples"
+            className="zt-samples"
+            aria-labelledby="samples-heading"
+          >
+            <div className="zt-samples-grid">
+              <header className="zt-samples-intro">
+                <p className="zt-kicker">{m['zombie.samples.eyebrow']()}</p>
+                <h2 id="samples-heading">{m['zombie.samples.title']()}</h2>
+                <p className="zt-head-text">
+                  {m['zombie.samples.description']()}
+                </p>
+                <dl className="zt-samples-spec">
+                  {(
+                    [
+                      [m['zombie.samples.spec_length'], '8s'],
+                      [m['zombie.samples.spec_quality'], '720p'],
+                      [
+                        m['zombie.samples.spec_sound'],
+                        m['zombie.samples.spec_sound_value'],
+                      ],
+                      [
+                        m['zombie.samples.spec_edits'],
+                        m['zombie.samples.spec_edits_value'],
+                      ],
+                    ] as const
+                  ).map(([term, value], i) => (
+                    <div key={i}>
+                      <dt>{term()}</dt>
+                      <dd>{typeof value === 'string' ? value : value()}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <a className="zt-button" href="#create">
+                  {m['zombie.samples.cta']()} <ArrowRight size={17} />
+                </a>
+              </header>
+              <ol className="zt-sample-list">
+                {exampleVideos.map((v, i) => (
+                  <li key={v.key} className="zt-sample">
+                    <div className="zt-sample-media">
+                      <video
+                        src={v.src}
+                        poster={v.poster}
+                        controls
+                        playsInline
+                        preload="none"
+                        aria-label={v.label()}
+                        onPlay={() =>
+                          track('zt_sample_play', { sample: v.key })
+                        }
+                      />
+                    </div>
+                    <p className="zt-sample-label">
+                      <span className="zt-sample-no">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      {v.label()}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </section>
+        )}
+
+        <section
+          id="story"
+          className="zt-story"
+          aria-labelledby="story-heading"
+        >
+          <header className="zt-head">
+            <p className="zt-kicker">{m['zombie.story.eyebrow']()}</p>
+            <h2 id="story-heading">{m['zombie.story.title']()}</h2>
+            <p className="zt-head-text">{m['zombie.story.description']()}</p>
+          </header>
+          <ol className="zt-contact">
+            {(
+              [
+                [
+                  beatImages.aim,
+                  m['zombie.story.aim.title'],
+                  m['zombie.story.aim.text'],
+                ],
+                [
+                  beatImages.recognise,
+                  m['zombie.story.recognise.title'],
+                  m['zombie.story.recognise.text'],
+                ],
+                [
+                  beatImages.hug,
+                  m['zombie.story.hug.title'],
+                  m['zombie.story.hug.text'],
+                ],
+                [
+                  beatImages.remember,
+                  m['zombie.story.remember.title'],
+                  m['zombie.story.remember.text'],
+                ],
+              ] as const
+            ).map(([src, title, text], i) => (
+              <li
+                key={i}
+                className={i === 3 ? 'zt-shot zt-shot-warm' : 'zt-shot'}
+              >
+                <div className="zt-shot-media">
+                  <OptImage src={src} alt="" width={600} height={760} />
+                </div>
+                <h3>{title()}</h3>
+                <p>{text()}</p>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <article className="zt-article" aria-labelledby="about-heading">
