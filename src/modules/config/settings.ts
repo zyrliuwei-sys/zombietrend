@@ -988,7 +988,7 @@ export function getSettings(): Setting[] {
       name: 'zombie_free_preview_cap',
       title: 'Free previews per day (site-wide)',
       type: 'number',
-      placeholder: '200 (default; 0 = turn free previews off)',
+      placeholder: '100 (default, ~$2/day; 0 = turn free previews off)',
       group: 'zombie',
       tab: 'ai',
     },

@@ -160,9 +160,29 @@ function OptImage({
   return video ? <MotionStill video={video}>{still}</MotionStill> : still;
 }
 
-// Finished clip clips shown under the hero (muted autoplay loops). Drop MP4s
-// into public/videos/examples/ and list them here; the strip hides when empty.
-const exampleVideos: { src: string; poster?: string }[] = [];
+// Unedited generator output shown under the hero, so visitors see the paid
+// product before buying (no free videos are given away). AI-generated
+// people; files in public/videos/examples/. The section hides when empty.
+const exampleVideos = [
+  {
+    key: 'couple',
+    src: '/videos/examples/couple.mp4',
+    poster: '/videos/examples/couple.jpg',
+    label: () => m['zombie.samples.couple'](),
+  },
+  {
+    key: 'mother',
+    src: '/videos/examples/mother.mp4',
+    poster: '/videos/examples/mother.jpg',
+    label: () => m['zombie.samples.mother'](),
+  },
+  {
+    key: 'dog',
+    src: '/videos/examples/dog.mp4',
+    poster: '/videos/examples/dog.jpg',
+    label: () => m['zombie.samples.dog'](),
+  },
+];
 
 const INSUFFICIENT_CREDITS = 'Insufficient credits';
 
@@ -353,9 +373,11 @@ function PhotoInput({
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
     <label className="zt-upload">
       <input
+        ref={inputRef}
         type="file"
         accept="image/png,image/jpeg,image/webp"
         className="sr-only"
@@ -370,7 +392,23 @@ function PhotoInput({
         }}
       />
       {preview ? (
-        <img src={preview} alt={label} className="zt-upload-preview" />
+        <>
+          <img src={preview} alt={label} className="zt-upload-preview" />
+          <button
+            type="button"
+            className="zt-upload-remove"
+            aria-label={m['zombie.create.remove_photo']()}
+            onClick={(e) => {
+              // Inside the label: don't let the click reopen the file picker.
+              e.preventDefault();
+              e.stopPropagation();
+              if (inputRef.current) inputRef.current.value = '';
+              onFile(null);
+            }}
+          >
+            <X size={16} strokeWidth={2} />
+          </button>
+        </>
       ) : (
         <Upload size={24} strokeWidth={1.5} />
       )}
@@ -832,6 +870,46 @@ export function ZombieTrendPage() {
             ))}
           </dl>
         </section>
+
+        {exampleVideos.length > 0 && (
+          <section
+            id="samples"
+            className="zt-samples"
+            aria-labelledby="samples-heading"
+          >
+            <header className="zt-head">
+              <p className="zt-kicker">{m['zombie.samples.eyebrow']()}</p>
+              <h2 id="samples-heading">{m['zombie.samples.title']()}</h2>
+              <p className="zt-head-text">
+                {m['zombie.samples.description']()}
+              </p>
+            </header>
+            <ul className="zt-sample-list">
+              {exampleVideos.map((v) => (
+                <li key={v.key} className="zt-sample">
+                  <div className="zt-sample-media">
+                    <video
+                      src={v.src}
+                      poster={v.poster}
+                      controls
+                      playsInline
+                      preload="none"
+                      aria-label={v.label()}
+                      onPlay={() => track('zt_sample_play', { sample: v.key })}
+                    />
+                  </div>
+                  <p className="zt-sample-label">{v.label()}</p>
+                  <p className="zt-sample-meta">{m['zombie.samples.meta']()}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="zt-samples-cta">
+              <a className="zt-button" href="#create">
+                {m['zombie.samples.cta']()}
+              </a>
+            </p>
+          </section>
+        )}
 
         <section
           id="story"

@@ -6,6 +6,7 @@ import {
   Film,
   Infinity as InfinityIcon,
   MonitorPlay,
+  ShieldCheck,
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -313,6 +314,10 @@ export function Pricing({
               s12: perLength[12].toLocaleString('en-US'),
               s15: perLength[15].toLocaleString('en-US'),
             })}
+          </p>
+          <p className="text-muted-foreground mt-2 inline-flex items-center gap-1.5 text-sm">
+            <ShieldCheck className="size-4 shrink-0" aria-hidden />
+            {m['landing.pricing.refund_note']()}
           </p>
         </div>
         <PricingTable

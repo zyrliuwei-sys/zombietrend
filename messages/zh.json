@@ -896,6 +896,7 @@
   "zombie.create.photos": "你的两张照片",
   "zombie.create.format": "JPG、PNG 或 WebP，每张不超过 10 MB",
   "zombie.create.person_a": "坚持到最后的人",
+  "zombie.create.remove_photo": "删除照片",
   "zombie.create.person_b": "被感染的人",
   "zombie.create.left": "幸存者，举枪",
   "zombie.create.right": "变成丧尸，人或宠物",
@@ -1080,5 +1081,14 @@
   "landing.pricing.feature_videos_fit": "可生成丧尸视频：{list}",
   "landing.pricing.video_count": "{count} 个 {seconds} 秒",
   "landing.pricing.or": " / ",
-  "landing.pricing.per_video_all": "8 秒视频 {s8} 积分 · 12 秒 {s12} · 15 秒 {s15}"
+  "landing.pricing.per_video_all": "8 秒视频 {s8} 积分 · 12 秒 {s12} · 15 秒 {s15}",
+  "landing.pricing.refund_note": "视频生成失败，积分自动全额退回。",
+  "zombie.samples.eyebrow": "真实成片",
+  "zombie.samples.title": "付费之前，先看成片",
+  "zombie.samples.description": "三条直接从生成器出来、没有剪辑的 8 秒视频：上传两张照片，得到一条视频。记得打开声音。片中人物为 AI 生成。",
+  "zombie.samples.couple": "情侣 · 婚礼回忆",
+  "zombie.samples.mother": "母女 · 厨房回忆",
+  "zombie.samples.dog": "主人和狗狗 · 海边回忆",
+  "zombie.samples.meta": "8 秒 · 720p · 带声音 · 未剪辑",
+  "zombie.samples.cta": "免费预览你自己的画面"
 }

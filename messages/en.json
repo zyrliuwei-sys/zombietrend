@@ -896,6 +896,7 @@
   "zombie.create.photos": "Your two photos",
   "zombie.create.format": "JPG, PNG or WebP, up to 10 MB each",
   "zombie.create.person_a": "The one holding on",
+  "zombie.create.remove_photo": "Remove photo",
   "zombie.create.person_b": "The one who turned",
   "zombie.create.left": "Survivor, holds the gun",
   "zombie.create.right": "Turns zombie, person or pet",
@@ -1080,5 +1081,14 @@
   "landing.pricing.feature_videos_fit": "Zombie videos: {list}",
   "landing.pricing.video_count": "{count} × {seconds}s",
   "landing.pricing.or": " / ",
-  "landing.pricing.per_video_all": "8s video = {s8} credits · 12s = {s12} · 15s = {s15}"
+  "landing.pricing.per_video_all": "8s video = {s8} credits · 12s = {s12} · 15s = {s15}",
+  "landing.pricing.refund_note": "If a video fails to generate, its credits are refunded automatically.",
+  "zombie.samples.eyebrow": "Real results",
+  "zombie.samples.title": "Watch what you'll get, before you pay",
+  "zombie.samples.description": "Three unedited 8-second videos straight from the generator: two photos in, one video out. Turn the sound on. The people are AI-generated.",
+  "zombie.samples.couple": "Couple · wedding-day memory",
+  "zombie.samples.mother": "Mother & daughter · kitchen memory",
+  "zombie.samples.dog": "Owner & dog · beach memory",
+  "zombie.samples.meta": "8 seconds · 720p · with sound · unedited",
+  "zombie.samples.cta": "Preview your own scene free"
 }
