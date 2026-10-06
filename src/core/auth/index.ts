@@ -1,6 +1,7 @@
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { oneTap } from 'better-auth/plugins';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import type { EmailProvider } from '@/core/email';
@@ -290,6 +291,17 @@ export function getAuth(configs?: Record<string, string>) {
       schema,
     }),
     socialProviders,
+    // Let Google/GitHub sign-in attach to an existing email+password user with
+    // the same email. Email verification is off by default here, so local users
+    // are usually unverified — without this, social sign-in fails with
+    // `account_not_linked`. These providers verify the email themselves.
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ['google', 'github'],
+        requireLocalEmailVerified: false,
+      },
+    },
     plugins: getAuthPlugins(configs),
     user: {
       additionalFields: {
@@ -359,6 +371,46 @@ export function getAuth(configs?: Record<string, string>) {
             }
 
             await sendWelcomeEmail(createdUser, all);
+          },
+        },
+      },
+      account: {
+        create: {
+          // Guard for requireLocalEmailVerified: false. When a trusted social
+          // provider links onto an unverified email+password user, that
+          // password may have been set by someone who pre-registered this
+          // email. The provider just proved ownership, so mark the email
+          // verified and drop the password login plus any existing sessions.
+          after: async (createdAccount: any) => {
+            if (!['google', 'github'].includes(createdAccount.providerId)) {
+              return;
+            }
+            try {
+              const [owner] = await db()
+                .select()
+                .from(schema.user)
+                .where(eq(schema.user.id, createdAccount.userId))
+                .limit(1);
+              if (!owner || owner.emailVerified) return;
+
+              await db()
+                .delete(schema.account)
+                .where(
+                  and(
+                    eq(schema.account.userId, owner.id),
+                    eq(schema.account.providerId, 'credential')
+                  )
+                );
+              await db()
+                .delete(schema.session)
+                .where(eq(schema.session.userId, owner.id));
+              await db()
+                .update(schema.user)
+                .set({ emailVerified: true })
+                .where(eq(schema.user.id, owner.id));
+            } catch (error) {
+              console.error('[auth] secure linked account failed', error);
+            }
           },
         },
       },
