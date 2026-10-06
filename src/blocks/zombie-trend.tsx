@@ -1,4 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -54,12 +61,86 @@ const SiteUserMenu = lazy(() =>
 const PaywallDialog = lazy(() => import('@/blocks/paywall-dialog'));
 
 const previewImage = '/imgs/generated/zt-scene.jpg';
-const sceneImage = previewImage;
-const heroImage = HERO_DESKTOP_IMAGE;
-const heroMobileImage = HERO_MOBILE_IMAGE;
 const coupleImage = '/imgs/generated/zt-couple.jpg';
 const dogImage = '/imgs/generated/zt-dog.jpg';
 const catImage = '/imgs/generated/zt-cat.jpg';
+// The four beats are cut from one Seedance story clip (same two people).
+const beatImages = {
+  aim: '/imgs/generated/zt-beat-aim.jpg',
+  recognise: '/imgs/generated/zt-beat-recognise.jpg',
+  hug: '/imgs/generated/zt-beat-hug.jpg',
+  remember: '/imgs/generated/zt-beat-remember.jpg',
+};
+
+// Short muted loops (Seedance text-to-video; each still is a frame of its
+// loop). The still stays in the markup as poster/LCP/SEO image; the loop is
+// fetched only near the viewport and fades in over it once playing.
+const STILL_VIDEOS: Record<string, string> = {
+  [HERO_DESKTOP_IMAGE]: '/videos/zt-hero.mp4',
+  [HERO_MOBILE_IMAGE]: '/videos/zt-hero-mobile.mp4',
+  [previewImage]: '/videos/zt-hero-mobile.mp4',
+  [coupleImage]: '/videos/zt-couple.mp4',
+  [dogImage]: '/videos/zt-dog.mp4',
+  [catImage]: '/videos/zt-cat.mp4',
+  [beatImages.aim]: '/videos/zt-beat-aim.mp4',
+  [beatImages.recognise]: '/videos/zt-beat-recognise.mp4',
+  [beatImages.hug]: '/videos/zt-beat-hug.mp4',
+  [beatImages.remember]: '/videos/zt-beat-remember.mp4',
+};
+
+function MotionStill({
+  video,
+  mobileVideo,
+  children,
+}: {
+  video: string;
+  mobileVideo?: string;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    const src =
+      mobileVideo && window.matchMedia(HERO_MOBILE_MEDIA).matches
+        ? mobileVideo
+        : video;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!el.getAttribute('src')) el.src = src;
+          el.play().catch(() => {});
+        } else {
+          el.pause();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [video, mobileVideo]);
+
+  return (
+    <span className="zt-motion">
+      {children}
+      <video
+        ref={ref}
+        muted
+        loop
+        playsInline
+        preload="none"
+        aria-hidden="true"
+        tabIndex={-1}
+        data-playing={playing ? '' : undefined}
+        onPlaying={() => setPlaying(true)}
+      />
+    </span>
+  );
+}
 
 /** Plain lazy image (the page's stills are small, pre-compressed JPEGs). */
 function OptImage({
@@ -72,7 +153,11 @@ function OptImage({
   width: number;
   height: number;
 }) {
-  return <img loading={eager ? undefined : 'lazy'} decoding="async" {...img} />;
+  const still = (
+    <img loading={eager ? undefined : 'lazy'} decoding="async" {...img} />
+  );
+  const video = STILL_VIDEOS[img.src];
+  return video ? <MotionStill video={video}>{still}</MotionStill> : still;
 }
 
 // Finished clip clips shown under the hero (muted autoplay loops). Drop MP4s
@@ -707,16 +792,24 @@ export function ZombieTrendPage() {
             </div>
             <figure className="zt-cover-photo">
               {/* Preloaded in routes/index.tsx; keep in sync. */}
-              <picture>
-                <source media={HERO_MOBILE_MEDIA} srcSet={HERO_MOBILE_IMAGE} />
-                <img
-                  src={HERO_DESKTOP_IMAGE}
-                  alt={m['zombie.hero.image_alt']()}
-                  width={1024}
-                  height={496}
-                  fetchPriority="high"
-                />
-              </picture>
+              <MotionStill
+                video={STILL_VIDEOS[HERO_DESKTOP_IMAGE]}
+                mobileVideo={STILL_VIDEOS[HERO_MOBILE_IMAGE]}
+              >
+                <picture>
+                  <source
+                    media={HERO_MOBILE_MEDIA}
+                    srcSet={HERO_MOBILE_IMAGE}
+                  />
+                  <img
+                    src={HERO_DESKTOP_IMAGE}
+                    alt={m['zombie.hero.image_alt']()}
+                    width={1024}
+                    height={496}
+                    fetchPriority="high"
+                  />
+                </picture>
+              </MotionStill>
               <figcaption>{m['zombie.hero.sub_cold']()}</figcaption>
             </figure>
           </div>
@@ -754,22 +847,22 @@ export function ZombieTrendPage() {
             {(
               [
                 [
-                  sceneImage,
+                  beatImages.aim,
                   m['zombie.story.aim.title'],
                   m['zombie.story.aim.text'],
                 ],
                 [
-                  heroMobileImage,
+                  beatImages.recognise,
                   m['zombie.story.recognise.title'],
                   m['zombie.story.recognise.text'],
                 ],
                 [
-                  heroImage,
+                  beatImages.hug,
                   m['zombie.story.hug.title'],
                   m['zombie.story.hug.text'],
                 ],
                 [
-                  coupleImage,
+                  beatImages.remember,
                   m['zombie.story.remember.title'],
                   m['zombie.story.remember.text'],
                 ],

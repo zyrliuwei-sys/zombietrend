@@ -1216,3 +1216,33 @@
     font-size: 32px;
   }
 }
+
+/* ─── Motion stills (looping video over the poster image) ─────────────── */
+.zt-motion {
+  position: relative;
+  display: block;
+  height: 100%;
+}
+.zt-motion > video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.zt-motion > video[data-playing] {
+  opacity: 1;
+}
+.zt-preview-media .zt-motion > video {
+  object-fit: cover;
+  background: transparent;
+}
+.zt-shot-media .zt-motion > video {
+  filter: grayscale(1) contrast(1.08);
+}
+.zt-shot-warm .zt-shot-media .zt-motion > video {
+  filter: none;
+}
