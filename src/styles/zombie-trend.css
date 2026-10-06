@@ -602,6 +602,8 @@
 }
 .zt-hint a {
   color: var(--zt-red);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .zt-preview {
   position: sticky;
@@ -1009,10 +1011,13 @@
 .zt-footer-links {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 4px 22px;
   flex-wrap: wrap;
 }
 .zt-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px; /* tap target ≥ 24px on touch screens */
   color: var(--zt-ink-soft);
   text-decoration: none;
   font-size: 13px;

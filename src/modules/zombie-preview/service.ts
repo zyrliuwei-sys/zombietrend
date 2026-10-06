@@ -1,5 +1,5 @@
 /**
- * Hotel Lobby free previews: anonymous scene stills, limited per IP/device
+ * Zombie Trend free previews: anonymous scene stills, limited per IP/device
  * per day plus a site-wide daily cap that bounds the fal bill.
  */
 

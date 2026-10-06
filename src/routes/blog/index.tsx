@@ -17,9 +17,6 @@ export const Route = createFileRoute('/blog/')({
   },
   head: ({ loaderData }) => {
     const locale = loaderData?.locale;
-    const hasPublishedPosts = loaderData?.posts.some(
-      (post) => post.source === 'db'
-    );
     const urlFor = (loc: string) =>
       localizeUrl(`${envConfigs.app_url}/blog`, { locale: loc as any }).href;
     return {
@@ -31,9 +28,6 @@ export const Route = createFileRoute('/blog/')({
           name: 'description',
           content: m['blog.description']({}, { locale: locale as any }),
         },
-        ...(!hasPublishedPosts
-          ? [{ name: 'robots', content: 'noindex,follow' }]
-          : []),
       ],
       links: [
         { rel: 'canonical', href: urlFor(locale ?? 'en') },

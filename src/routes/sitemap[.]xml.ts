@@ -61,20 +61,29 @@ export const Route = createFileRoute('/sitemap.xml')({
           priority: path === '' ? 1 : 0.8,
         }));
 
-        // Only published project articles belong in the sitemap. The bundled
-        // ShipAny tutorial posts are demo content and carry noindex.
+        // Bundled MDX articles (src/content/posts) are real ZombieTrend AI
+        // content, listed with any published database articles.
+        const { getLocalPosts } = await import('@/content/posts');
+        const localPosts = getLocalPosts(baseLocale);
+        entries.push({
+          path: '/blog',
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        });
+        for (const post of localPosts) {
+          entries.push({
+            path: `/blog/${post.slug}`,
+            lastModified: new Date(post.createdAt).toISOString(),
+            changeFrequency: 'monthly',
+            priority: 0.7,
+          });
+        }
         try {
           const { listPublishedArticles } =
             await import('@/modules/posts/service');
           const rows = await listPublishedArticles().catch(() => []);
-          if (rows.length > 0) {
-            entries.push({
-              path: '/blog',
-              changeFrequency: 'weekly',
-              priority: 0.7,
-            });
-          }
           for (const post of rows) {
+            if (localPosts.some((p) => p.slug === post.slug)) continue;
             entries.push({
               path: `/blog/${post.slug}`,
               lastModified: new Date(post.createdAt).toISOString(),

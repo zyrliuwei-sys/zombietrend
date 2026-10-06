@@ -684,7 +684,7 @@ export function ZombieTrendPage() {
           <h1 id="cover-heading" className="zt-nameplate">
             <span className="zt-nameplate-word">
               {m['zombie.hero.title']()}
-            </span>
+            </span>{' '}
             <span className="zt-deck">{m['zombie.hero.title_sub']()}</span>
           </h1>
           <div className="zt-cover-grid">
@@ -748,6 +748,7 @@ export function ZombieTrendPage() {
           <header className="zt-head">
             <p className="zt-kicker">{m['zombie.story.eyebrow']()}</p>
             <h2 id="story-heading">{m['zombie.story.title']()}</h2>
+            <p className="zt-head-text">{m['zombie.story.description']()}</p>
           </header>
           <ol className="zt-contact">
             {(

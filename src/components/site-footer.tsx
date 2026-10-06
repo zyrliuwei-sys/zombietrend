@@ -61,7 +61,7 @@ export function SiteFooter({
                 <p className="text-foreground text-[13px] font-semibold tracking-wide">
                   {col.title}
                 </p>
-                <ul className="space-y-2">
+                <ul className="space-y-0.5">
                   {col.links.map((link) => (
                     <li key={link.label}>
                       {isExternalHref(link.href) ? (
@@ -73,7 +73,7 @@ export function SiteFooter({
                               : '_blank'
                           }
                           rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                          className="text-muted-foreground hover:text-foreground inline-flex min-h-8 items-center text-sm transition-colors"
                         >
                           {link.label}
                         </a>
@@ -81,7 +81,7 @@ export function SiteFooter({
                         <Link
                           href={link.href}
                           target={link.external ? '_blank' : undefined}
-                          className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                          className="text-muted-foreground hover:text-foreground inline-flex min-h-8 items-center text-sm transition-colors"
                         >
                           {link.label}
                         </Link>

@@ -29,6 +29,8 @@ export const Route = createFileRoute('/')({
         { property: 'og:title', content: title },
         { property: 'og:description', content: description },
         { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: urlFor(locale) },
+        { property: 'og:site_name', content: envConfigs.app_name },
         {
           property: 'og:image',
           content: `${envConfigs.app_url}${OG_IMAGE}`,

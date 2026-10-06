@@ -2,6 +2,7 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { notFound, useLoaderData } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { OG_IMAGE } from '@/config/zombie-images';
 import { m } from '@/paraglide/messages.js';
 import {
   baseLocale,
@@ -69,6 +70,12 @@ export function staticPageRouteOptions(slug: string) {
         meta: [
           { title: meta.title },
           { name: 'description', content: meta.description },
+          { property: 'og:title', content: meta.title },
+          { property: 'og:description', content: meta.description },
+          { property: 'og:type', content: 'article' },
+          { property: 'og:url', content: canonical },
+          { property: 'og:image', content: `${envConfigs.app_url}${OG_IMAGE}` },
+          { name: 'twitter:card', content: 'summary_large_image' },
         ],
         links: [
           { rel: 'canonical', href: canonical },
@@ -78,6 +85,13 @@ export function staticPageRouteOptions(slug: string) {
             href: localizeUrl(`${envConfigs.app_url}/${slug}`, { locale: loc })
               .href,
           })),
+          {
+            rel: 'alternate',
+            hrefLang: 'x-default',
+            href: localizeUrl(`${envConfigs.app_url}/${slug}`, {
+              locale: baseLocale,
+            }).href,
+          },
         ],
       };
     },
