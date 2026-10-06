@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { AIMediaType, FalProvider } from '@/core/ai';
+import { AIMediaType } from '@/core/ai';
+import { evolinkFromConfigs } from '@/core/ai/evolink';
 import { getAuth } from '@/core/auth';
 import {
   DEFAULT_CLIP_LENGTH,
@@ -91,7 +92,8 @@ async function POST({ request }: { request: Request }) {
     if (!isAdmin && (await getBalance(userId)) < price) {
       return respErr('Insufficient credits');
     }
-    if (!configs.fal_api_key) return respErr('Generation is not configured');
+    const provider = evolinkFromConfigs(configs);
+    if (!provider) return respErr('Generation is not configured');
     const direction =
       typeof body?.direction === 'string' ? body.direction : undefined;
     if (isBlockedDirection(direction)) return respErr(DIRECTION_BLOCKED);
@@ -103,7 +105,7 @@ async function POST({ request }: { request: Request }) {
     const task = await createTask({
       userId,
       mediaType: AIMediaType.VIDEO,
-      provider: 'fal',
+      provider: 'evolink',
       model: PIPELINE_MODEL,
       prompt: `Animate free preview ${preview.id}`,
       costCredits: isAdmin ? 0 : price,
@@ -120,7 +122,6 @@ async function POST({ request }: { request: Request }) {
     }
 
     try {
-      const provider = new FalProvider({ apiKey: configs.fal_api_key });
       const quality = videoSceneQuality(configs);
       if (meetsQuality(preview.quality, quality)) {
         await claimTaskStatus(

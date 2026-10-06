@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { FalProvider } from '@/core/ai';
+import { evolinkFromConfigs } from '@/core/ai/evolink';
 import { envConfigs } from '@/config';
 import {
   AITaskStatus,
@@ -20,6 +20,7 @@ import {
   advancePreview,
   PIPELINE_MODEL,
   repersistTask,
+  TEMPORARY_RESULT_LIKE,
 } from './-pipeline';
 
 const CRON_KEY_HEADER = 'x-cron-key';
@@ -38,8 +39,8 @@ async function POST({ request }: { request: Request }) {
   }
 
   const configs = await getAllConfigs();
-  if (!configs.fal_api_key) return respData({ skipped: true });
-  const provider = new FalProvider({ apiKey: configs.fal_api_key });
+  const provider = evolinkFromConfigs(configs);
+  if (!provider) return respData({ skipped: true });
   const now = Date.now();
   const stats = { advanced: 0, timedOut: 0, persisted: 0, previews: 0 };
 
@@ -69,7 +70,7 @@ async function POST({ request }: { request: Request }) {
   const unsaved = await listTasksByStatus({
     model: PIPELINE_MODEL,
     statuses: [AITaskStatus.SUCCESS],
-    resultLike: '%fal.media%',
+    resultLike: TEMPORARY_RESULT_LIKE,
     infoNotLike: '%"persistAttempts":3%',
     limit: 3,
   });

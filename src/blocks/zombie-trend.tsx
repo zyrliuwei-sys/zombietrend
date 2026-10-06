@@ -322,7 +322,7 @@ function WatermarkedImage({
   );
 }
 
-// Downscale to ≤1536px JPEG so uploads stay small; fal accepts data URIs.
+// Downscale to ≤1536px JPEG so uploads stay small; the server re-uploads them to Evolink.
 async function toDataUrl(file: File, maxSide = 1536): Promise<string> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));

@@ -935,12 +935,12 @@ export function getSettings(): Setting[] {
       type: 'select',
       options: [
         {
-          label: 'Seedance 2.0 Fast (default, ~$0.24/s at 720p)',
-          value: 'bytedance/seedance-2.0/fast/image-to-video',
+          label: 'Seedance 2.0 Fast via Evolink (default, faster)',
+          value: 'seedance-2.0-fast-image-to-video',
         },
         {
-          label: 'Seedance 2.0 (sharper, ~$0.30/s at 720p — raise credits)',
-          value: 'bytedance/seedance-2.0/image-to-video',
+          label: 'Seedance 2.0 via Evolink (sharper, pricier — raise credits)',
+          value: 'seedance-2.0-image-to-video',
         },
       ],
       group: 'zombie',
@@ -961,7 +961,8 @@ export function getSettings(): Setting[] {
       name: 'zombie_credits_8',
       title: 'Credits per 8-second video (override)',
       type: 'number',
-      placeholder: 'Leave empty = auto (620: 3× fal cost, 1 credit = $0.01)',
+      placeholder:
+        'Leave empty = auto (580 at 720p: 7× Evolink cost, 1 credit = $0.01)',
       group: 'zombie',
       tab: 'ai',
     },
@@ -969,7 +970,8 @@ export function getSettings(): Setting[] {
       name: 'zombie_credits_12',
       title: 'Credits per 12-second video (override)',
       type: 'number',
-      placeholder: 'Leave empty = auto (920: 3× fal cost, 1 credit = $0.01)',
+      placeholder:
+        'Leave empty = auto (860 at 720p: 7× Evolink cost, 1 credit = $0.01)',
       group: 'zombie',
       tab: 'ai',
     },
@@ -977,7 +979,8 @@ export function getSettings(): Setting[] {
       name: 'zombie_credits_15',
       title: 'Credits per 15-second video (override)',
       type: 'number',
-      placeholder: 'Leave empty = auto (1,130: 3× fal cost, 1 credit = $0.01)',
+      placeholder:
+        'Leave empty = auto (1,070 at 720p: 7× Evolink cost, 1 credit = $0.01)',
       group: 'zombie',
       tab: 'ai',
     },

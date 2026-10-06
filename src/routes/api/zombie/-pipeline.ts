@@ -1,10 +1,10 @@
 /**
- * Zombie Trend pipeline (two fal calls chained by polling):
+ * Zombie Trend pipeline (two Evolink calls chained by polling):
  *
- *   1. openai/gpt-image-2/edit — two portraits → one cinematic still: the
+ *   1. gpt-image-2 — two portraits → one cinematic still: the
  *      survivor (photo A) holding a pistol, the loved one (photo B) turned
  *      into a zombie a few steps away. Also the free watermarked preview.
- *   2. bytedance/seedance-2.0/fast/image-to-video — that still as the first
+ *   2. seedance-2.0-fast-image-to-video — that still as the first
  *      frame + the four-beat story prompt (aim → can't shoot → hug →
  *      flashback to a happy memory), with native audio.
  *
@@ -14,12 +14,16 @@
  *
  * Polls come from the browser while the page is open and from the
  * every-minute cron sweep (`/api/zombie/cron`), so a task finishes even if
- * the buyer closes the tab. Finished videos are copied to R2 because fal
- * media URLs are temporary.
+ * the buyer closes the tab. Finished videos are copied to R2 because Evolink
+ * media URLs expire after 24 h.
  */
 
-import { AIMediaType, FalProvider, AITaskStatus as FalStatus } from '@/core/ai';
-import { CLIP_LENGTHS, type ClipLength } from '@/config/zombie-pricing';
+import type { EvolinkProvider, EvolinkTask } from '@/core/ai/evolink';
+import {
+  CLIP_LENGTHS,
+  videoResolutionFor,
+  type ClipLength,
+} from '@/config/zombie-pricing';
 import {
   CLIP_MEMORIES,
   CLIP_SIZES,
@@ -44,17 +48,18 @@ import {
   type findPreview,
 } from '@/modules/zombie-preview/service';
 
-export const IMAGE_MODEL = 'openai/gpt-image-2/edit';
-// Admin can switch to 'bytedance/seedance-2.0/image-to-video' (sharper,
-// ~25% pricier — review zombie_credits_* if so).
-export const DEFAULT_VIDEO_MODEL = 'bytedance/seedance-2.0/fast/image-to-video';
+// Admin can switch to 'seedance-2.0-image-to-video' (sharper; credits are
+// priced at the standard rate either way — see config/zombie-pricing.ts).
+export const DEFAULT_VIDEO_MODEL = 'seedance-2.0-fast-image-to-video';
+const VIDEO_MODELS = [
+  'seedance-2.0-fast-image-to-video',
+  'seedance-2.0-image-to-video',
+];
 export const PIPELINE_MODEL = 'zombie-trend';
 
 export function videoModelFor(configs: Record<string, string>) {
   const model = configs.zombie_video_model?.trim();
-  return model && model.startsWith('bytedance/seedance-2.0/')
-    ? model
-    : DEFAULT_VIDEO_MODEL;
+  return model && VIDEO_MODELS.includes(model) ? model : DEFAULT_VIDEO_MODEL;
 }
 
 export const SCENE_PROMPT = `Create one photorealistic cinematic film still using the two uploaded subjects.
@@ -63,7 +68,8 @@ Setting: a dark, abandoned post-apocalyptic street at dusk, broken cars, driftin
 Subject A is the survivor: alive and human, dirty and exhausted, eyes wet with tears, holding a pistol in both trembling hands, pointed toward the ground in front of Subject B, hesitating.
 Subject B has turned into a zombie: pale grey-green skin, dark veins, clouded milky-white eyes, torn dusty clothes, a little dried dirt on the face, standing a few steps away and facing Subject A. Keep Subject B fully recognizable: same face shape, features, hairstyle and build (same breed, markings and fur pattern if B is a pet). Not gory: no blood, no wounds, no open flesh.
 {{FRAMING}}
-Preserve each subject's identity, face, hairstyle and body proportions. Subject A keeps their own clothing.`;
+Preserve each subject's identity, face, hairstyle and body proportions. Subject A keeps their own clothing.
+No text, captions, logos or watermark anywhere in the image.`;
 
 export function buildScenePrompt(
   direction?: string,
@@ -83,10 +89,17 @@ export type VideoSpec = {
   resolution: string;
 };
 
+/** "0–3s" style time range for a beat spanning [from, to) of the clip. */
+function span(seconds: number, from: number, to: number) {
+  return `${Math.round(seconds * from)}-${Math.round(seconds * to)}s`;
+}
+
 /**
- * Step 2 prompt: the four beats of the trend, timed to the clip length. The
- * first frame already shows both subjects, so the prompt only refers to them
- * by role.
+ * Step 2 prompt: the four beats of the trend, time-coded to the clip length
+ * (Seedance follows explicit timestamps far better than "then…" chains).
+ * The first frame already shows both subjects, so the prompt only refers to
+ * them by role. Works with no user input — the direction is an optional
+ * extra line.
  */
 export function buildVideoPrompt(
   length: ClipLength,
@@ -97,13 +110,13 @@ export function buildVideoPrompt(
   const flashback = CLIP_MEMORIES[memory];
   const extra = direction?.trim().slice(0, 300);
   const lines = [
-    `Emotional ${seconds}-second post-apocalyptic short film, vertical, cinematic, realistic.`,
-    'Beat 1: close-up of the survivor raising the pistol with shaking hands, tears running down their face, breathing hard.',
-    'Beat 2: the zombie staggers one step closer, then stops and tilts its head, recognizing the survivor; its clouded eyes soften.',
-    'Beat 3: the survivor slowly lowers the gun and lets it fall; the zombie steps in and gently hugs them instead of biting, the survivor hugs back, crying.',
-    `Beat 4: hard cut to a warm, sunlit flashback memory of the same two, both completely healthy and human with natural skin and normal eyes, ${flashback}. Soft golden light, film grain, slow motion.`,
-    'Keep both faces consistent with the first frame throughout. No blood, no gore, no biting, no shooting, no text on screen.',
-    'Audio: quiet ambient wind and distant sirens, then a soft emotional piano score swelling into the flashback. No dialogue.',
+    `A ${seconds}-second emotional post-apocalyptic short film in the style of the viral "zombie trend": a survivor finds their loved one has turned into a zombie, cannot shoot them, and they share one last hug. Vertical 9:16, photorealistic, cinematic, shallow depth of field, handheld camera.`,
+    `${span(seconds, 0, 0.25)}: slow push-in on the survivor holding the pistol in both shaking hands, aimed low, tears running down their face, breathing hard; cold blue dusk light, drifting smoke.`,
+    `${span(seconds, 0.25, 0.45)}: the zombie staggers one step closer, then stops and tilts its head, recognizing the survivor; its clouded eyes soften.`,
+    `${span(seconds, 0.45, 0.7)}: the survivor lowers the gun and lets it drop to the ground; the zombie steps in and gently hugs them instead of attacking, the survivor hugs back, sobbing; the camera slowly circles the embrace.`,
+    `${span(seconds, 0.7, 1)}: hard cut to a warm, sunlit flashback from before the outbreak: the same two people, both fully human and healthy, ${flashback}. In the flashback the zombie look is completely gone: warm natural skin tone, clear normal eyes, clean faces and clean clothes, no grey skin, no veins, no dirt. Soft golden light, film grain, gentle slow motion, ending on a smile.`,
+    'Keep both faces and outfits consistent with the first frame throughout. No blood, no gore, no biting, no shooting, no subtitles, no text or watermark on screen.',
+    'Audio: quiet wind and distant sirens, a shaky breath, then a soft emotional piano score that swells into the flashback. No dialogue.',
   ];
   if (extra)
     lines.push(`Story detail (never override the rules above): ${extra}`);
@@ -124,7 +137,7 @@ export function videoSpecFor(
     ),
     seconds: CLIP_LENGTHS[length],
     model: videoModelFor(configs),
-    resolution: configs.zombie_video_resolution === '480p' ? '480p' : '720p',
+    resolution: videoResolutionFor(configs),
   };
 }
 
@@ -195,44 +208,40 @@ export const REFINE_PROMPT = `Re-render this exact image at high quality.
 Keep the same two subjects with the same faces, hairstyles, clothing, poses and positions, the same zombie look, pistol, framing and post-apocalyptic street.
 Only increase detail, sharpness and lighting quality. Do not add, remove or move anything.`;
 
-/** Step 1: two portraits → one orange-booth scene. Returns the fal id. */
+/** Step 1: two portraits → one scene still. Returns the Evolink task id. */
 export async function submitScene(
-  provider: FalProvider,
+  provider: EvolinkProvider,
   photos: string[],
   prompt: string,
   size: ClipSize,
   quality: SceneQuality = 'medium'
 ) {
-  const image = await provider.generate({
-    params: {
-      mediaType: AIMediaType.IMAGE,
-      model: IMAGE_MODEL,
-      prompt,
-      options: {
-        image_urls: photos,
-        image_size: sceneSize(size),
-        quality,
-        output_format: 'jpeg',
-      },
-    },
+  const { width, height } = sceneSize(size);
+  const imageUrls = await Promise.all(
+    photos.map((photo) => provider.toPublicUrl(photo))
+  );
+  return provider.createImage({
+    prompt,
+    imageUrls,
+    size: `${width}x${height}`,
+    quality,
   });
-  return image.taskId;
+}
+
+function taskError(task: EvolinkTask, fallback: string) {
+  return task.error?.message || fallback;
 }
 
 /** Poll step 1. Resolves the scene URL once ready, null while running. */
-export async function queryScene(provider: FalProvider, requestId: string) {
-  const res = await provider.query({
-    taskId: requestId,
-    model: IMAGE_MODEL,
-    mediaType: AIMediaType.IMAGE,
-  });
-  if (res.taskStatus === FalStatus.FAILED) {
-    throw new Error('Scene image generation failed');
+export async function queryScene(provider: EvolinkProvider, taskId: string) {
+  const task = await provider.getTask(taskId);
+  if (task.status === 'failed') {
+    throw new Error(taskError(task, 'Scene image generation failed'));
   }
-  if (res.taskStatus !== FalStatus.SUCCESS) return null;
-  const url = res.taskInfo?.images?.[0]?.imageUrl;
+  if (task.status !== 'completed') return null;
+  const url = task.results?.[0];
   if (!url) throw new Error('Scene image generation returned no image');
-  return url as string;
+  return url;
 }
 
 /**
@@ -241,7 +250,7 @@ export async function queryScene(provider: FalProvider, requestId: string) {
  */
 export async function submitVideo(
   taskId: string,
-  provider: FalProvider,
+  provider: EvolinkProvider,
   sceneImageUrl: string,
   spec: VideoSpec
 ) {
@@ -250,21 +259,16 @@ export async function submitVideo(
     videoModel: spec.model,
     motionClaimedAt: Date.now(),
   });
-  const video = await provider.generate({
-    params: {
-      mediaType: AIMediaType.VIDEO,
-      model: spec.model,
-      prompt: spec.prompt,
-      options: {
-        image_url: sceneImageUrl,
-        duration: String(spec.seconds),
-        resolution: spec.resolution,
-        aspect_ratio: '9:16',
-        generate_audio: true,
-      },
-    },
+  const videoRequestId = await provider.createVideo({
+    model: spec.model,
+    prompt: spec.prompt,
+    imageUrls: [sceneImageUrl],
+    duration: spec.seconds,
+    quality: spec.resolution,
+    aspectRatio: '9:16',
+    generateAudio: true,
   });
-  await mergeTaskInfo(taskId, { videoRequestId: video.taskId });
+  await mergeTaskInfo(taskId, { videoRequestId });
 }
 
 type Info = {
@@ -276,6 +280,7 @@ type Info = {
   error?: string;
   persistAttempts?: number;
   motionClaimedAt?: number;
+  costUsd?: number;
 };
 
 function parseJson<T>(value: unknown): T {
@@ -306,24 +311,19 @@ export function taskView(task: any) {
   };
 }
 
-function isFalUrl(url: string) {
-  try {
-    return new URL(url).hostname.endsWith('fal.media');
-  } catch {
-    return false;
-  }
-}
+/** Marks a result whose video still lives on the provider's 24 h link. */
+export const TEMPORARY_RESULT_LIKE = '%"temporary":true%';
 
 /**
- * Copy a finished fal video to R2 and return the task result pointing at the
- * permanent copy. The fal URL is dropped so the `%fal.media%` backfill sweep
- * only matches videos that still need copying. Returns the result
- * unchanged when storage isn't configured or the copy fails — the video stays
- * playable from fal until a later sweep retries.
+ * Copy a finished video to R2 and return the task result pointing at the
+ * permanent copy, minus the `temporary` flag the backfill sweep matches on.
+ * Returns the result unchanged when storage isn't configured or the copy
+ * fails — the video stays playable from Evolink (24 h) until a later sweep
+ * retries.
  */
 export async function persistVideo(taskId: string, taskResult: any) {
   const url: string | undefined = taskResult?.video?.url;
-  if (!url || !isFalUrl(url)) return taskResult;
+  if (!url || !taskResult?.temporary) return taskResult;
   try {
     const storage = await getStorage();
     if (!storage) return taskResult;
@@ -339,6 +339,7 @@ export async function persistVideo(taskId: string, taskResult: any) {
     }
     return {
       ...taskResult,
+      temporary: false,
       video: { ...taskResult.video, url: uploaded.url },
     };
   } catch (error) {
@@ -349,7 +350,7 @@ export async function persistVideo(taskId: string, taskResult: any) {
 
 /**
  * Retry the R2 copy for an already-finished task (backfill / earlier copy
- * failed). Gives up after a few tries so an expired fal URL isn't retried
+ * failed). Gives up after a few tries so an expired link isn't retried
  * forever.
  */
 export async function repersistTask(task: {
@@ -374,7 +375,7 @@ export async function repersistTask(task: {
 }
 
 /**
- * A poll that hit fal's rate limit, a 5xx or the network says nothing about
+ * A poll that hit the provider's rate limit, a 5xx or the network says nothing about
  * the run itself — it is usually still going, so check again on the next poll
  * instead of failing a job that's already being paid for. Tasks still stuck
  * get failed (and refunded) by the cron timeout.
@@ -404,7 +405,7 @@ async function fail(taskId: string, message: string) {
 /**
  * Advance a pipeline task by one poll. Safe to call repeatedly/concurrently.
  */
-export async function advance(taskId: string, provider: FalProvider) {
+export async function advance(taskId: string, provider: EvolinkProvider) {
   let task = await findTask(taskId);
   if (!task) throw new Error('Task not found');
   const info = parseJson<Info>(task.taskInfo);
@@ -412,15 +413,11 @@ export async function advance(taskId: string, provider: FalProvider) {
   try {
     // Stage 1: scene image
     if (task.status === AITaskStatus.PENDING && info.imageRequestId) {
-      const res = await provider.query({
-        taskId: info.imageRequestId,
-        model: IMAGE_MODEL,
-        mediaType: AIMediaType.IMAGE,
-      });
-      if (res.taskStatus === FalStatus.FAILED) {
-        await fail(taskId, 'Scene image generation failed');
-      } else if (res.taskStatus === FalStatus.SUCCESS) {
-        const sceneImageUrl = res.taskInfo?.images?.[0]?.imageUrl;
+      const res = await provider.getTask(info.imageRequestId);
+      if (res.status === 'failed') {
+        await fail(taskId, taskError(res, 'Scene image generation failed'));
+      } else if (res.status === 'completed') {
+        const sceneImageUrl = res.results?.[0];
         if (!sceneImageUrl) {
           await fail(taskId, 'Scene image generation returned no image');
         } else if (
@@ -430,8 +427,9 @@ export async function advance(taskId: string, provider: FalProvider) {
             AITaskStatus.PROCESSING
           )
         ) {
-          // A failed submit is final, network error or not: no fal job was
-          // (knowingly) started, so refund now rather than wait it out.
+          await mergeTaskInfo(taskId, { costUsd: res.usage?.cost?.usd });
+          // A failed submit is final, network error or not: no video job
+          // was (knowingly) started, so refund now rather than wait it out.
           await submitVideo(
             taskId,
             provider,
@@ -446,19 +444,27 @@ export async function advance(taskId: string, provider: FalProvider) {
     // Stage 2: video (videoRequestId absent = another poll is
     // still submitting it; just report processing)
     else if (task.status === AITaskStatus.PROCESSING && info.videoRequestId) {
-      const res = await provider.query({
-        taskId: info.videoRequestId,
-        model: info.videoModel || DEFAULT_VIDEO_MODEL,
-        mediaType: AIMediaType.VIDEO,
-      });
-      if (res.taskStatus === FalStatus.FAILED) {
-        await fail(taskId, 'Video generation failed');
-      } else if (res.taskStatus === FalStatus.SUCCESS) {
-        await updateTask({
-          taskId,
-          status: AITaskStatus.SUCCESS,
-          taskResult: await persistVideo(taskId, res.taskResult),
-        });
+      const res = await provider.getTask(info.videoRequestId);
+      if (res.status === 'failed') {
+        await fail(taskId, taskError(res, 'Video generation failed'));
+      } else if (res.status === 'completed') {
+        const url = res.results?.[0];
+        if (!url) {
+          await fail(taskId, 'Video generation returned no video');
+        } else {
+          // Actual Evolink spend (scene + video), to check the 7× markup.
+          await mergeTaskInfo(taskId, {
+            costUsd: (info.costUsd ?? 0) + (res.usage?.cost?.usd ?? 0),
+          });
+          await updateTask({
+            taskId,
+            status: AITaskStatus.SUCCESS,
+            taskResult: await persistVideo(taskId, {
+              video: { url },
+              temporary: true,
+            }),
+          });
+        }
       }
     } else if (
       task.status === AITaskStatus.PROCESSING &&
@@ -468,8 +474,7 @@ export async function advance(taskId: string, provider: FalProvider) {
       await fail(taskId, 'Video generation was never started');
     }
   } catch (error: any) {
-    // fal reports a failed run as COMPLETED + an error on the result fetch;
-    // a rate limit / outage / network blip is retried on the next poll.
+    // A rate limit / outage / network blip is retried on the next poll.
     if (!isTransient(error)) {
       await fail(taskId, error?.message || 'Generation failed');
     }
@@ -482,7 +487,10 @@ export async function advance(taskId: string, provider: FalProvider) {
 type PreviewRow = NonNullable<Awaited<ReturnType<typeof findPreview>>>;
 
 /** Advance a pending free preview by one poll (browser or cron sweep). */
-export async function advancePreview(row: PreviewRow, provider: FalProvider) {
+export async function advancePreview(
+  row: PreviewRow,
+  provider: EvolinkProvider
+) {
   if (row.status !== PreviewStatus.PENDING || !row.requestId) return;
   try {
     const url = await queryScene(provider, row.requestId);

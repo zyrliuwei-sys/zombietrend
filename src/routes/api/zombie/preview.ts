@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { FalProvider } from '@/core/ai';
+import { evolinkFromConfigs } from '@/core/ai/evolink';
 import { getAuth } from '@/core/auth';
 import { getAllConfigs } from '@/modules/config/service';
 import { screenPrompt } from '@/modules/content-safety/service';
@@ -34,7 +34,7 @@ import {
 
 type PreviewRow = NonNullable<Awaited<ReturnType<typeof findPreview>>>;
 
-// The fal URL never reaches the browser: the still is served through
+// The provider URL never reaches the browser: the still is served through
 // /api/zombie/preview-image so the client can only show it watermarked.
 function previewView(row: PreviewRow) {
   return {
@@ -70,7 +70,7 @@ async function freeLeft(
 ) {
   if (admin) return { left: 1, reason: null };
   const { dailyCap, perVisitor } = previewLimits(configs);
-  if (!dailyCap || !perVisitor || !configs.fal_api_key) {
+  if (!dailyCap || !perVisitor || !configs.evolink_api_key) {
     return { left: 0, reason: FREE_PREVIEW_PAUSED };
   }
   if ((await countAllPreviews()) >= dailyCap) {
@@ -114,8 +114,8 @@ async function GET({ request }: { request: Request }) {
     let row = await findPreview(id);
     if (!row) return respErr('Preview not found');
 
-    if (row.status === PreviewStatus.PENDING && row.requestId) {
-      const provider = new FalProvider({ apiKey: configs.fal_api_key });
+    const provider = evolinkFromConfigs(configs);
+    if (provider && row.status === PreviewStatus.PENDING && row.requestId) {
       await advancePreview(row, provider);
       row = (await findPreview(id))!;
     }
@@ -165,7 +165,8 @@ async function POST({ request }: { request: Request }) {
     });
 
     try {
-      const provider = new FalProvider({ apiKey: configs.fal_api_key });
+      const provider = evolinkFromConfigs(configs);
+      if (!provider) throw new Error(FREE_PREVIEW_PAUSED);
       const requestId = await submitScene(
         provider,
         input.photos,

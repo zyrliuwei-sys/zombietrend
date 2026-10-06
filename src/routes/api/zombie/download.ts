@@ -7,7 +7,7 @@ import { respErr } from '@/lib/resp';
 import { PIPELINE_MODEL, taskView } from './-pipeline';
 
 // Same-origin download of a finished clip video. The file lives on another
-// origin (R2 / fal), where the browser ignores <a download>, so it's streamed
+// origin (R2 / Evolink), where the browser ignores <a download>, so it's streamed
 // through here with an attachment Content-Disposition.
 async function GET({ request }: { request: Request }) {
   const session = await getAuth().api.getSession({ headers: request.headers });

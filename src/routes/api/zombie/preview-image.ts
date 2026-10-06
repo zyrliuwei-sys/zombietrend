@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { findPreview, PreviewStatus } from '@/modules/zombie-preview/service';
 
-// Streams a finished preview still from fal without exposing its URL.
+// Streams a finished preview still from Evolink without exposing its URL.
 async function GET({ request }: { request: Request }) {
   const id = new URL(request.url).searchParams.get('id');
   const row = id ? await findPreview(id) : undefined;

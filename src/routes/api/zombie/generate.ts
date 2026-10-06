@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { AIMediaType, FalProvider } from '@/core/ai';
+import { AIMediaType } from '@/core/ai';
+import { evolinkFromConfigs } from '@/core/ai/evolink';
 import { getAuth } from '@/core/auth';
 import {
   DEFAULT_CLIP_LENGTH,
@@ -49,7 +50,7 @@ async function POST({ request }: { request: Request }) {
       return respErr(DIRECTION_BLOCKED);
     }
 
-    // Admins generate free; everyone else pays 3× the fal cost in credits.
+    // Admins generate free; everyone else pays 7× the Evolink cost in credits.
     // Checked first so an unpaid user always lands on the paywall.
     const isAdmin = await hasPermission(session.user.id, 'admin.*');
     const length = isClipLength(body?.length)
@@ -60,21 +61,21 @@ async function POST({ request }: { request: Request }) {
       return respErr('Insufficient credits');
     }
 
-    if (!configs.fal_api_key) return respErr('Generation is not configured');
+    const provider = evolinkFromConfigs(configs);
+    if (!provider) return respErr('Generation is not configured');
     const videoSpec = videoSpecFor(configs, length, memory, direction);
 
     const prompt = buildScenePrompt(direction, size);
     const task = await createTask({
       userId: session.user.id,
       mediaType: AIMediaType.VIDEO,
-      provider: 'fal',
+      provider: 'evolink',
       model: PIPELINE_MODEL,
       prompt,
       costCredits: isAdmin ? 0 : price,
     });
 
     try {
-      const provider = new FalProvider({ apiKey: configs.fal_api_key });
       const imageRequestId = await submitScene(
         provider,
         photos,

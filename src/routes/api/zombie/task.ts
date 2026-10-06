@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { FalProvider } from '@/core/ai';
+import { evolinkFromConfigs } from '@/core/ai/evolink';
 import { getAuth } from '@/core/auth';
 import { AITaskStatus, findTask } from '@/modules/ai-tasks/service';
 import { getAllConfigs } from '@/modules/config/service';
@@ -35,7 +35,8 @@ async function GET({ request }: { request: Request }) {
     }
 
     const configs = await getAllConfigs();
-    const provider = new FalProvider({ apiKey: configs.fal_api_key });
+    const provider = evolinkFromConfigs(configs);
+    if (!provider) return respData(taskView(task));
     return respData(await advance(task.id, provider));
   } catch (error: any) {
     return respErr(error?.message || 'Query failed');

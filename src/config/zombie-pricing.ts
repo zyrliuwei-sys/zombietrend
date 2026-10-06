@@ -1,29 +1,46 @@
 /**
  * Zombie Trend credit pricing (client-safe, no server imports).
  *
- * 1 credit is sold at no less than $0.01 (see ./pricing.ts), and each video is
- * charged at ≥ 3× its fal cost:
- *   fal cost = GPT Image 2 edit scene (9:16, ~$0.13 measured on the duet
- *              pipeline) + Seedance 2.0 Fast image-to-video at 720p
- *              (~$0.242 / second — fal lists ~$2.42 per 10 s clip).
- * Source: fal.ai model pages (2026-10-06). Standard Seedance 2.0 is
- * ~$0.3034 / s; switching zombie_video_model to it needs a price review.
+ * 1 credit is sold at $0.01 (see ./pricing.ts), and each video is charged
+ * at 7× its Evolink cost, as actually billed on real runs (2026-10-06):
+ *   GPT Image 2 scene still (720×1280, medium, two reference photos) $0.040
+ *   Seedance 2.0 Fast image-to-video: 720p $0.394 / 4 s = $0.0985/s,
+ *                                     480p $0.366 / 8 s = $0.0458/s
+ * That is about half the evolink.ai list price (720p "$0.199/s"), which
+ * includes a Fast-model promo said to end 2026-10-06. If Evolink raises the
+ * rate, raise these — each task logs its real spend as `costUsd` in
+ * taskInfo. The standard (non-Fast) model costs more; review before
+ * switching zombie_video_model to it.
  */
 
-export const FAL_SCENE_IMAGE_USD = 0.13;
-export const FAL_VIDEO_USD_PER_SECOND = 0.242;
-export const PRICE_MARKUP = 3;
+export const SCENE_IMAGE_USD = 0.04;
+export const VIDEO_USD_PER_SECOND = { '720p': 0.0985, '480p': 0.0458 } as const;
+export type VideoResolution = keyof typeof VIDEO_USD_PER_SECOND;
+export const PRICE_MARKUP = 7;
 export const USD_PER_CREDIT = 0.01;
 
-export function falCostUsd(seconds: number) {
-  return FAL_SCENE_IMAGE_USD + FAL_VIDEO_USD_PER_SECOND * seconds;
+export function videoResolutionFor(
+  configs: Record<string, string>
+): VideoResolution {
+  return configs.zombie_video_resolution === '480p' ? '480p' : '720p';
 }
 
-export function clipCredits(seconds: number) {
+export function evolinkCostUsd(
+  seconds: number,
+  resolution: VideoResolution = '720p'
+) {
+  return SCENE_IMAGE_USD + VIDEO_USD_PER_SECOND[resolution] * seconds;
+}
+
+export function clipCredits(
+  seconds: number,
+  resolution: VideoResolution = '720p'
+) {
   const s = Math.min(Math.max(seconds, 4), 15);
-  const credits = (falCostUsd(s) * PRICE_MARKUP) / USD_PER_CREDIT;
+  const credits =
+    (evolinkCostUsd(s, resolution) * PRICE_MARKUP) / USD_PER_CREDIT;
   // Round off float noise, then up to a whole 10 credits so prices read
-  // cleanly (906.6 → 910).
+  // cleanly (855.4 → 860).
   return Math.ceil(Number(credits.toFixed(6)) / 10) * 10;
 }
 
@@ -42,7 +59,7 @@ export function isClipLength(value: unknown): value is ClipLength {
 
 /**
  * Credits for one video of the given length. An admin override
- * (zombie_credits_8 / _12 / _15) wins; otherwise 3× the fal cost.
+ * (zombie_credits_8 / _12 / _15) wins; otherwise 7× the Evolink cost.
  */
 export function resolveClipCreditsFor(
   configs: Record<string, string>,
@@ -50,7 +67,7 @@ export function resolveClipCreditsFor(
 ) {
   const override = Number(configs[`zombie_credits_${length}`]);
   if (Number.isFinite(override) && override > 0) return Math.ceil(override);
-  return clipCredits(CLIP_LENGTHS[length]);
+  return clipCredits(CLIP_LENGTHS[length], videoResolutionFor(configs));
 }
 
 /** Default-length price, for callers that only show one number. */

@@ -3,12 +3,10 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-  CalendarClock,
   Film,
   Infinity as InfinityIcon,
   MonitorPlay,
   Sparkles,
-  XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -87,8 +85,25 @@ export function Pricing({
       ),
     staleTime: 10 * 60_000,
   });
-  const perVideo = priceData?.credits ?? clipCredits(12);
-  const perLongVideo = priceData?.lengths?.['15'] ?? clipCredits(15);
+  const perLength = {
+    8: priceData?.lengths?.['8'] ?? clipCredits(8),
+    12: priceData?.lengths?.['12'] ?? clipCredits(12),
+    15: priceData?.lengths?.['15'] ?? clipCredits(15),
+  };
+
+  // "3 × 8s / 2 × 12s" — only the lengths the pack can actually pay for.
+  function videosFit(credits: number) {
+    return ([8, 12, 15] as const)
+      .map((seconds) => ({
+        seconds,
+        count: Math.floor(credits / perLength[seconds]),
+      }))
+      .filter(({ count }) => count > 0)
+      .map(({ seconds, count }) =>
+        m['landing.pricing.video_count']({ count, seconds })
+      )
+      .join(m['landing.pricing.or']());
+  }
 
   function features(credits: number, extra: PricingFeature[]) {
     return [
@@ -100,16 +115,9 @@ export function Pricing({
       },
       {
         icon: Film,
-        label:
-          credits >= perLongVideo
-            ? m['landing.pricing.feature_videos_lengths']({
-                short: Math.floor(credits / perVideo),
-                long: Math.floor(credits / perLongVideo),
-              })
-            : m['landing.pricing.feature_videos_short_only']({
-                short: Math.floor(credits / perVideo),
-                credits: perLongVideo.toLocaleString('en-US'),
-              }),
+        label: m['landing.pricing.feature_videos_fit']({
+          list: videosFit(credits),
+        }),
       },
       { icon: MonitorPlay, label: m['landing.pricing.feature_hd']() },
       ...extra,
@@ -166,38 +174,8 @@ export function Pricing({
       label: m['landing.pricing.feature_no_subscription'](),
     },
   ];
-  const monthlyExtra = [
-    {
-      icon: CalendarClock,
-      label: m['landing.pricing.feature_monthly_refill'](),
-    },
-    { icon: XCircle, label: m['landing.pricing.feature_cancel']() },
-  ];
-  const tiers = [
-    ['basic', m['landing.pricing.basic'](), m['landing.pricing.basic_desc']()],
-    ['pro', m['landing.pricing.pro'](), m['landing.pricing.pro_desc']()],
-    [
-      'studio',
-      m['landing.pricing.studio'](),
-      m['landing.pricing.studio_desc'](),
-    ],
-  ] as const;
-
+  // One-time packs only — a single group, so the table shows no tabs.
   const groups: PricingGroup[] = [
-    // One-time is the tab shown by default (see defaultGroup below).
-    {
-      key: 'monthly',
-      label: m['landing.pricing.monthly'](),
-      plans: tiers.map(([tier, name, description]) =>
-        plan(`${tier}_monthly`, {
-          name,
-          description,
-          featured: tier === 'pro',
-          badge: tier === 'pro' ? m['landing.pricing.popular']() : undefined,
-          extra: monthlyExtra,
-        })
-      ),
-    },
     {
       key: 'one-time',
       label: m['landing.pricing.one_time'](),
@@ -209,7 +187,7 @@ export function Pricing({
         }),
         plan('pack_starter', {
           name: m['landing.pricing.pack_starter'](),
-          description: m['landing.pricing.pack_desc'](),
+          description: m['landing.pricing.pack_starter_desc'](),
           featured: true,
           badge: m['landing.pricing.popular'](),
           extra: packExtra,
@@ -315,7 +293,7 @@ export function Pricing({
         dialog ? undefined : 'border-border border-t px-4 py-24 sm:py-32'
       }
     >
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <div className={dialog ? 'mb-8 pr-8 text-center' : 'mb-20 text-center'}>
           <h2
             className={
@@ -330,9 +308,10 @@ export function Pricing({
             {m['landing.pricing.description']()}
           </p>
           <p className="text-muted-foreground mt-2 text-sm">
-            {m['landing.pricing.per_video_lengths']({
-              short: perVideo.toLocaleString('en-US'),
-              long: perLongVideo.toLocaleString('en-US'),
+            {m['landing.pricing.per_video_all']({
+              s8: perLength[8].toLocaleString('en-US'),
+              s12: perLength[12].toLocaleString('en-US'),
+              s15: perLength[15].toLocaleString('en-US'),
             })}
           </p>
         </div>

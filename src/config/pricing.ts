@@ -31,12 +31,14 @@ export type PricingProduct = {
 
 /**
  * ZombieTrend catalog. A zombie video costs a fixed number of credits per
- * length (see ./zombie-pricing.ts — 920 for the default 12 s clip, ≈ 3× its
- * ~$3.03 fal cost), and every pack covers a whole number of 12 s videos.
+ * length (see ./zombie-pricing.ts — 7× the Evolink cost at 720p: 580 for
+ * 8 s, 860 for 12 s, 1,070 for 15 s). The four one-time packs are what
+ * the pricing page sells; the monthly plans stay in the catalog only so
+ * existing subscriptions keep renewing.
  *
  * Pricing floor: no product may sell credits below $0.01 each, so every
- * video is sold at ≥ 3× its fal cost. That is why there are no discounted
- * yearly plans — check priceInCents / credits ≥ 0.01 before adding a product.
+ * video is sold at 7× its Evolink cost — check priceInCents / credits ≥ 0.01
+ * before adding a product.
  * Keys MUST match what the pricing UI sends as product_id.
  */
 export const pricingCatalog: Record<string, PricingProduct> = {
@@ -46,10 +48,10 @@ export const pricingCatalog: Record<string, PricingProduct> = {
     planName: 'Single Video',
     description: 'Single Video',
     type: PaymentType.ONE_TIME,
-    // $9.90 for one 12 s video (920 credits) — the trend's default length.
-    priceInCents: 990,
+    // $5.90: one 8 s video (580 credits).
+    priceInCents: 590,
     currency: 'usd',
-    credits: 990,
+    credits: 590,
   },
   pack_starter: {
     productId: 'pack_starter',
@@ -57,10 +59,10 @@ export const pricingCatalog: Record<string, PricingProduct> = {
     planName: 'Starter Pack',
     description: 'Starter Pack',
     type: PaymentType.ONE_TIME,
-    // $19.90 for two 12 s videos (or three 8 s ones).
-    priceInCents: 1990,
+    // $10.90: one video of any length (15 s = 1,070 credits).
+    priceInCents: 1090,
     currency: 'usd',
-    credits: 1990,
+    credits: 1090,
   },
   pack_standard: {
     productId: 'pack_standard',
@@ -68,9 +70,10 @@ export const pricingCatalog: Record<string, PricingProduct> = {
     planName: 'Standard Pack',
     description: 'Standard Pack',
     type: PaymentType.ONE_TIME,
-    priceInCents: 3990,
+    // $19.90: two 12 s videos (1,720) or three 8 s ones (1,740).
+    priceInCents: 1990,
     currency: 'usd',
-    credits: 3990,
+    credits: 1990,
   },
   pack_pro: {
     productId: 'pack_pro',
@@ -78,9 +81,10 @@ export const pricingCatalog: Record<string, PricingProduct> = {
     planName: 'Pro Pack',
     description: 'Pro Pack',
     type: PaymentType.ONE_TIME,
-    priceInCents: 7990,
+    // $39.90: four 12 s videos (3,440) or six 8 s ones (3,480).
+    priceInCents: 3990,
     currency: 'usd',
-    credits: 7990,
+    credits: 3990,
   },
   basic_monthly: {
     productId: 'basic_monthly',
