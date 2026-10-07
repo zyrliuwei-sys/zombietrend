@@ -59,6 +59,7 @@ export async function createPreview(params: {
   deviceId: string;
   userId?: string | null;
   size: string;
+  style: string;
   quality: string;
 }): Promise<ZombiePreview> {
   const [row] = await db()
@@ -70,6 +71,7 @@ export async function createPreview(params: {
       userId: params.userId ?? null,
       status: PreviewStatus.PENDING,
       size: params.size,
+      style: params.style,
       quality: params.quality,
       createdAt: new Date(),
     })

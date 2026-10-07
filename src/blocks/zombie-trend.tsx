@@ -36,9 +36,12 @@ import {
   CLIP_MEMORIES,
   DEFAULT_CLIP_MEMORY,
   DEFAULT_CLIP_SIZE,
+  DEFAULT_CLIP_STYLE,
+  isClipStyle,
   OFFERED_CLIP_SIZES,
   type ClipMemory,
   type ClipSize,
+  type ClipStyle,
 } from '@/config/zombie-sizes';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { draftDelete, draftGet, draftSet } from '@/lib/draft-store';
@@ -222,6 +225,7 @@ type Draft = {
   photoA: File | null;
   photoB: File | null;
   direction: string;
+  style?: ClipStyle;
   memory: ClipMemory;
   size: ClipSize;
   length: ClipLength;
@@ -427,6 +431,7 @@ export function ZombieTrendPage() {
   const [photoA, setPhotoA] = useState<File | null>(null);
   const [photoB, setPhotoB] = useState<File | null>(null);
   const [direction, setDirection] = useState('');
+  const [style, setStyle] = useState<ClipStyle>(DEFAULT_CLIP_STYLE);
   const [memory, setMemory] = useState<ClipMemory>(DEFAULT_CLIP_MEMORY);
   const [size, setSize] = useState<ClipSize>(DEFAULT_CLIP_SIZE);
   const [length, setLength] = useState<ClipLength>(DEFAULT_CLIP_LENGTH);
@@ -483,6 +488,7 @@ export function ZombieTrendPage() {
         setPhotoA(d.photoA);
         setPhotoB(d.photoB);
         setDirection(d.direction);
+        if (isClipStyle(d.style)) setStyle(d.style);
         if (d.memory in CLIP_MEMORIES) setMemory(d.memory);
         if (OFFERED_CLIP_SIZES.includes(d.size)) setSize(d.size);
         if (d.length in CLIP_LENGTHS) setLength(d.length);
@@ -501,13 +507,24 @@ export function ZombieTrendPage() {
       photoA,
       photoB,
       direction,
+      style,
       memory,
       size,
       length,
       consent,
       at: Date.now(),
     } satisfies Draft);
-  }, [draftReady, photoA, photoB, direction, memory, size, length, consent]);
+  }, [
+    draftReady,
+    photoA,
+    photoB,
+    direction,
+    style,
+    memory,
+    size,
+    length,
+    consent,
+  ]);
   // Only ever written here; cleared explicitly by `forget` so a (re)mount
   // with empty state can't wipe what the restore above is about to read.
   useEffect(() => {
@@ -532,8 +549,9 @@ export function ZombieTrendPage() {
         photoB: await toDataUrl(photoB!),
         direction: direction.trim() || undefined,
         size,
+        style,
       }),
-    onMutate: () => track('zt_preview_start', { size }),
+    onMutate: () => track('zt_preview_start', { size, style }),
     onSuccess: (preview) => {
       setTaskId(undefined);
       setPreviewId(preview.id);
@@ -604,6 +622,7 @@ export function ZombieTrendPage() {
         photoB: await toDataUrl(photoB!),
         direction: direction.trim() || undefined,
         size,
+        style,
         length,
         memory,
       }),
@@ -939,6 +958,43 @@ export function ZombieTrendPage() {
                   file={photoB}
                   onFile={changeInput(setPhotoB)}
                 />
+              </div>
+              <p className="zt-field-label" id="clip-style-label">
+                {m['zombie.create.style']()}
+              </p>
+              <div
+                className="zt-styles"
+                role="radiogroup"
+                aria-labelledby="clip-style-label"
+              >
+                {(
+                  [
+                    ['gun', m['zombie.style.gun'], m['zombie.style.gun_desc']],
+                    [
+                      'cure',
+                      m['zombie.style.cure'],
+                      m['zombie.style.cure_desc'],
+                    ],
+                    [
+                      'glass',
+                      m['zombie.style.glass'],
+                      m['zombie.style.glass_desc'],
+                    ],
+                  ] as const
+                ).map(([key, label, desc]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={style === key}
+                    className="zt-style"
+                    disabled={running}
+                    onClick={() => changeInput(setStyle)(key)}
+                  >
+                    <span className="zt-style-name">{label()}</span>
+                    <span>{desc()}</span>
+                  </button>
+                ))}
               </div>
               <p className="zt-field-label" id="clip-memory-label">
                 {m['zombie.create.memory']()}

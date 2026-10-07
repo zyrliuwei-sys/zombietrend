@@ -100,7 +100,14 @@ async function POST({ request }: { request: Request }) {
     if (!(await screenPrompt(direction, configs)).allowed) {
       return respErr(DIRECTION_BLOCKED);
     }
-    const videoSpec = videoSpecFor(configs, length, body?.memory, direction);
+    // The preview's scene was composed for its style; the video must match.
+    const videoSpec = videoSpecFor(
+      configs,
+      length,
+      body?.memory,
+      direction,
+      preview.style
+    );
 
     const task = await createTask({
       userId,

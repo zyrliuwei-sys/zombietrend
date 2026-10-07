@@ -46,3 +46,22 @@ export const DEFAULT_CLIP_MEMORY: ClipMemory = 'sunny';
 export function isClipMemory(value: unknown): value is ClipMemory {
   return typeof value === 'string' && value in CLIP_MEMORIES;
 }
+
+/**
+ * The story the clip tells. Each style has its own scene still and video
+ * beats (see routes/api/zombie/-pipeline.ts); all end on the flashback
+ * memory. Picked in the generator; the free preview is made for one style,
+ * and animating it keeps that style.
+ */
+export const CLIP_STYLES = ['gun', 'cure', 'glass'] as const;
+
+export type ClipStyle = (typeof CLIP_STYLES)[number];
+
+export const DEFAULT_CLIP_STYLE: ClipStyle = 'gun';
+
+export function isClipStyle(value: unknown): value is ClipStyle {
+  return (
+    typeof value === 'string' &&
+    (CLIP_STYLES as readonly string[]).includes(value)
+  );
+}

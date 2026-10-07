@@ -43,7 +43,7 @@ async function POST({ request }: { request: Request }) {
     if (isBlockedDirection(input.direction)) {
       return respErr(DIRECTION_BLOCKED);
     }
-    const { photos, direction, size, memory } = input;
+    const { photos, direction, size, memory, style } = input;
 
     const configs = await getAllConfigs();
     if (!(await screenPrompt(direction, configs)).allowed) {
@@ -63,9 +63,9 @@ async function POST({ request }: { request: Request }) {
 
     const provider = evolinkFromConfigs(configs);
     if (!provider) return respErr('Generation is not configured');
-    const videoSpec = videoSpecFor(configs, length, memory, direction);
+    const videoSpec = videoSpecFor(configs, length, memory, direction, style);
 
-    const prompt = buildScenePrompt(direction, size);
+    const prompt = buildScenePrompt(direction, size, style);
     const task = await createTask({
       userId: session.user.id,
       mediaType: AIMediaType.VIDEO,

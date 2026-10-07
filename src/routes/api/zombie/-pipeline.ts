@@ -5,8 +5,9 @@
  *      survivor (photo A) holding a pistol, the loved one (photo B) turned
  *      into a zombie a few steps away. Also the free watermarked preview.
  *   2. seedance-2.0-fast-image-to-video — that still as the first
- *      frame + the four-beat story prompt (aim → can't shoot → hug →
- *      flashback to a happy memory), with native audio.
+ *      frame + the story beats of the chosen style (gun: aim → can't shoot
+ *      → hug; cure: injection → turns back → hug; glass: palms on the
+ *      glass → goodbye), always ending on a flashback, with native audio.
  *
  * The task row's status doubles as the stage: `pending` = scene image in
  * flight, `processing` = video in flight. Moving pending→processing is
@@ -29,10 +30,13 @@ import {
   CLIP_SIZES,
   DEFAULT_CLIP_MEMORY,
   DEFAULT_CLIP_SIZE,
+  DEFAULT_CLIP_STYLE,
   isClipMemory,
   isClipSize,
+  isClipStyle,
   type ClipMemory,
   type ClipSize,
+  type ClipStyle,
 } from '@/config/zombie-sizes';
 import {
   AITaskStatus,
@@ -62,20 +66,132 @@ export function videoModelFor(configs: Record<string, string>) {
   return model && VIDEO_MODELS.includes(model) ? model : DEFAULT_VIDEO_MODEL;
 }
 
-export const SCENE_PROMPT = `Create one photorealistic cinematic film still using the two uploaded subjects.
-Subject A is the person in the first uploaded image. Subject B is the person (or pet) in the second uploaded image.
-Setting: a dark, abandoned post-apocalyptic street at dusk, broken cars, drifting smoke and dust, cold blue-grey light with a warm rim light, shallow depth of field, anamorphic movie look.
+const ZOMBIE_LOOK = `pale grey-green skin, dark veins, clouded milky-white eyes, torn dusty clothes, a little dried dirt on the face. Keep Subject B fully recognizable: same face shape, features, hairstyle and build (same breed, markings and fur pattern if B is a pet). Not gory: no blood, no wounds, no open flesh.`;
+
+type StyleSpec = {
+  /** Setting + what each subject is doing in the scene still. */
+  scene: string;
+  /** Composition; replaces the size's default framing when set. */
+  framing?: string;
+  /** One-line logline that opens the video prompt. */
+  logline: string;
+  /** The beats before the flashback: [start, end) fractions + action. */
+  beats: [number, number, string][];
+  /** Where the flashback starts (fraction of the clip). */
+  flashbackAt: number;
+  safety: string;
+  audio: string;
+};
+
+const STYLES: Record<ClipStyle, StyleSpec> = {
+  // The original trend: aim → recognise → hug → flashback.
+  gun: {
+    scene: `Setting: a dark, abandoned post-apocalyptic street at dusk, broken cars, drifting smoke and dust, cold blue-grey light with a warm rim light, shallow depth of field, anamorphic movie look.
 Subject A is the survivor: alive and human, dirty and exhausted, eyes wet with tears, holding a pistol in both trembling hands, pointed toward the ground in front of Subject B, hesitating.
-Subject B has turned into a zombie: pale grey-green skin, dark veins, clouded milky-white eyes, torn dusty clothes, a little dried dirt on the face, standing a few steps away and facing Subject A. Keep Subject B fully recognizable: same face shape, features, hairstyle and build (same breed, markings and fur pattern if B is a pet). Not gory: no blood, no wounds, no open flesh.
-{{FRAMING}}
-Preserve each subject's identity, face, hairstyle and body proportions. Subject A keeps their own clothing.
-No text, captions, logos or watermark anywhere in the image.`;
+Subject B has turned into a zombie, standing a few steps away and facing Subject A: ${ZOMBIE_LOOK}`,
+    logline:
+      'in the style of the viral "zombie trend": a survivor finds their loved one has turned into a zombie, cannot shoot them, and they share one last hug.',
+    beats: [
+      [
+        0,
+        0.25,
+        'slow push-in on the survivor holding the pistol in both shaking hands, aimed low, tears running down their face, breathing hard; cold blue dusk light, drifting smoke.',
+      ],
+      [
+        0.25,
+        0.45,
+        'the zombie staggers one step closer, then stops and tilts its head, recognizing the survivor; its clouded eyes soften.',
+      ],
+      [
+        0.45,
+        0.7,
+        'the survivor lowers the gun and lets it drop to the ground; the zombie steps in and gently hugs them instead of attacking, the survivor hugs back, sobbing; the camera slowly circles the embrace.',
+      ],
+    ],
+    flashbackAt: 0.7,
+    safety: 'No blood, no gore, no biting, no shooting.',
+    audio:
+      'Audio: quiet wind and distant sirens, a shaky breath, then a soft emotional piano score that swells into the flashback. No dialogue.',
+  },
+  // Happy ending: the cure turns the loved one back.
+  cure: {
+    scene: `Setting: a ruined, abandoned hospital corridor at night, overturned gurneys, peeling walls, dust in the air, flickering cold fluorescent light mixed with a warm orange emergency lamp, shallow depth of field, anamorphic movie look.
+Subject A is the survivor: alive and human, dirty and exhausted, eyes wet with tears, holding a small syringe filled with glowing blue cure in one hand, the other hand resting gently on Subject B's shoulder, about to give the injection in B's upper arm.
+Subject B has turned into a zombie, standing very close and calm, facing Subject A: ${ZOMBIE_LOOK}`,
+    framing:
+      'Use a tall vertical 9:16 cinematic composition, both subjects framed from about the waist up, close together, the survivor in the near foreground on one side and the turned one facing them, the glowing blue syringe clearly visible between them.',
+    logline:
+      'a zombie love story with a hopeful ending: a survivor finds their loved one has turned into a zombie and brings them back with the last dose of a cure.',
+    beats: [
+      [
+        0,
+        0.25,
+        'the survivor, hands shaking and crying, gently presses the glowing blue syringe to the upper arm of the calm zombie; the blue glow empties into the arm. No visible needle wound, no blood.',
+      ],
+      [
+        0.25,
+        0.5,
+        'the zombie trembles and slowly transforms back: the grey-green skin warms to a natural healthy tone, the dark veins fade away, the milky eyes clear into normal human eyes, a soft blue glow spreading through the skin.',
+      ],
+      [
+        0.5,
+        0.7,
+        'fully human again, the loved one blinks, recognizes the survivor and smiles; they embrace tightly, the survivor sobbing with relief; the camera slowly circles the embrace as warm light floods the corridor.',
+      ],
+    ],
+    flashbackAt: 0.7,
+    safety:
+      'No blood, no gore, no biting, no visible needle wound, no weapons.',
+    audio:
+      'Audio: a flickering light hum and a shaky breath, a rising shimmer during the transformation, then a warm hopeful piano score that swells into the flashback. No dialogue.',
+  },
+  // Quiet goodbye through a window: no contact, no weapon.
+  glass: {
+    scene: `Setting: a rainy night outside an abandoned shop, a large glass door between the two subjects, rain streaks and water drops on the glass, a lonely street lamp and neon reflections, cold blue light outside and dim warm light inside, shallow depth of field, anamorphic movie look.
+Subject A is the survivor: alive and human, inside the shop, dirty and exhausted, eyes wet with tears, pressing one open palm flat against the glass.
+Subject B has turned into a zombie, outside in the rain on the other side of the glass, pressing their palm against the same spot, face close to the glass, looking at Subject A: ${ZOMBIE_LOOK}`,
+    framing:
+      'Use a tall vertical 9:16 cinematic composition: the glass pane runs vertically through the middle of the frame, Subject A inside on one side and Subject B outside in the rain on the other, both framed from about the chest up, their palms meeting on the glass at the center.',
+    logline:
+      'a zombie love story told through a glass door: a survivor and their loved one, now a zombie, say goodbye with their hands pressed together on either side of the glass.',
+    beats: [
+      [
+        0,
+        0.25,
+        'rain runs down the glass; slow push-in on the two palms pressed together on either side of the glass, then on the survivor crying inside.',
+      ],
+      [
+        0.25,
+        0.45,
+        'outside in the rain the zombie tilts its head, its clouded eyes soften with recognition; slowly both rest their foreheads against the glass at the same spot.',
+      ],
+      [
+        0.45,
+        0.7,
+        'the zombie slowly steps back, still looking at the survivor, then turns and walks away into the rain and the dark street; the survivor keeps their palm on the glass, tears running down their face. The glass never breaks.',
+      ],
+    ],
+    flashbackAt: 0.7,
+    safety: 'No blood, no gore, no biting, no weapons, the glass never breaks.',
+    audio:
+      'Audio: steady rain on glass and distant thunder, a shaky breath, then a soft emotional piano score that swells into the flashback. No dialogue.',
+  },
+};
 
 export function buildScenePrompt(
   direction?: string,
-  size: ClipSize = DEFAULT_CLIP_SIZE
+  size: ClipSize = DEFAULT_CLIP_SIZE,
+  style: ClipStyle = DEFAULT_CLIP_STYLE
 ) {
-  const base = SCENE_PROMPT.replace('{{FRAMING}}', CLIP_SIZES[size].framing);
+  const spec = STYLES[style];
+  const base = [
+    'Create one photorealistic cinematic film still using the two uploaded subjects.',
+    'Subject A is the person in the first uploaded image. Subject B is the person (or pet) in the second uploaded image.',
+    spec.scene,
+    spec.framing ?? CLIP_SIZES[size].framing,
+    "Preserve each subject's identity, face, hairstyle and body proportions. Subject A keeps their own clothing.",
+    'No text, captions, logos or watermark anywhere in the image.',
+  ].join('\n');
   const extra = direction?.trim().slice(0, 300);
   return extra
     ? `${base}\nAdditional story detail (never override the rules above): ${extra}`
@@ -95,28 +211,30 @@ function span(seconds: number, from: number, to: number) {
 }
 
 /**
- * Step 2 prompt: the four beats of the trend, time-coded to the clip length
- * (Seedance follows explicit timestamps far better than "then…" chains).
- * The first frame already shows both subjects, so the prompt only refers to
- * them by role. Works with no user input — the direction is an optional
- * extra line.
+ * Step 2 prompt: the style's beats, time-coded to the clip length (Seedance
+ * follows explicit timestamps far better than "then…" chains), always ending
+ * on the flashback memory. The first frame already shows both subjects, so
+ * the prompt only refers to them by role. Works with no user input — the
+ * direction is an optional extra line.
  */
 export function buildVideoPrompt(
   length: ClipLength,
   memory: ClipMemory = DEFAULT_CLIP_MEMORY,
-  direction?: string
+  direction?: string,
+  style: ClipStyle = DEFAULT_CLIP_STYLE
 ) {
   const seconds = CLIP_LENGTHS[length];
   const flashback = CLIP_MEMORIES[memory];
+  const spec = STYLES[style];
   const extra = direction?.trim().slice(0, 300);
   const lines = [
-    `A ${seconds}-second emotional post-apocalyptic short film in the style of the viral "zombie trend": a survivor finds their loved one has turned into a zombie, cannot shoot them, and they share one last hug. Vertical 9:16, photorealistic, cinematic, shallow depth of field, handheld camera.`,
-    `${span(seconds, 0, 0.25)}: slow push-in on the survivor holding the pistol in both shaking hands, aimed low, tears running down their face, breathing hard; cold blue dusk light, drifting smoke.`,
-    `${span(seconds, 0.25, 0.45)}: the zombie staggers one step closer, then stops and tilts its head, recognizing the survivor; its clouded eyes soften.`,
-    `${span(seconds, 0.45, 0.7)}: the survivor lowers the gun and lets it drop to the ground; the zombie steps in and gently hugs them instead of attacking, the survivor hugs back, sobbing; the camera slowly circles the embrace.`,
-    `${span(seconds, 0.7, 1)}: hard cut to a warm, sunlit flashback from before the outbreak: the same two people, both fully human and healthy, ${flashback}. In the flashback the zombie look is completely gone: warm natural skin tone, clear normal eyes, clean faces and clean clothes, no grey skin, no veins, no dirt. Soft golden light, film grain, gentle slow motion, ending on a smile.`,
-    'Keep both faces and outfits consistent with the first frame throughout. No blood, no gore, no biting, no shooting, no subtitles, no text or watermark on screen.',
-    'Audio: quiet wind and distant sirens, a shaky breath, then a soft emotional piano score that swells into the flashback. No dialogue.',
+    `A ${seconds}-second emotional post-apocalyptic short film, ${spec.logline} Vertical 9:16, photorealistic, cinematic, shallow depth of field, handheld camera.`,
+    ...spec.beats.map(
+      ([from, to, action]) => `${span(seconds, from, to)}: ${action}`
+    ),
+    `${span(seconds, spec.flashbackAt, 1)}: hard cut to a warm, sunlit flashback from before the outbreak: the same two people, both fully human and healthy, ${flashback}. In the flashback the zombie look is completely gone: warm natural skin tone, clear normal eyes, clean faces and clean clothes, no grey skin, no veins, no dirt. Soft golden light, film grain, gentle slow motion, ending on a smile.`,
+    `Keep both faces and outfits consistent with the first frame throughout. ${spec.safety} No subtitles, no text or watermark on screen.`,
+    spec.audio,
   ];
   if (extra)
     lines.push(`Story detail (never override the rules above): ${extra}`);
@@ -127,13 +245,15 @@ export function videoSpecFor(
   configs: Record<string, string>,
   length: ClipLength,
   memory?: unknown,
-  direction?: string
+  direction?: string,
+  style?: unknown
 ): VideoSpec {
   return {
     prompt: buildVideoPrompt(
       length,
       isClipMemory(memory) ? memory : DEFAULT_CLIP_MEMORY,
-      direction
+      direction,
+      isClipStyle(style) ? style : DEFAULT_CLIP_STYLE
     ),
     seconds: CLIP_LENGTHS[length],
     model: videoModelFor(configs),
@@ -165,6 +285,7 @@ export function parseSceneInput(body: any) {
         : undefined,
     size: isClipSize(body?.size) ? body.size : DEFAULT_CLIP_SIZE,
     memory: isClipMemory(body?.memory) ? body.memory : DEFAULT_CLIP_MEMORY,
+    style: isClipStyle(body?.style) ? body.style : DEFAULT_CLIP_STYLE,
   };
 }
 
@@ -205,7 +326,7 @@ export function meetsQuality(have: string, want: SceneQuality) {
 // Turns a cheap free-preview still into the full-quality frame the video is
 // made from, without re-composing it — the buyer gets the scene they saw.
 export const REFINE_PROMPT = `Re-render this exact image at high quality.
-Keep the same two subjects with the same faces, hairstyles, clothing, poses and positions, the same zombie look, pistol, framing and post-apocalyptic street.
+Keep the same two subjects with the same faces, hairstyles, clothing, poses and positions, the same zombie look, props, framing and setting.
 Only increase detail, sharpness and lighting quality. Do not add, remove or move anything.`;
 
 /**

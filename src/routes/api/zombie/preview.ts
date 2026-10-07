@@ -172,6 +172,7 @@ async function POST({ request }: { request: Request }) {
       deviceId: ids.deviceId,
       userId,
       size: input.size,
+      style: input.style,
       quality,
     });
 
@@ -181,7 +182,7 @@ async function POST({ request }: { request: Request }) {
       const requestId = await submitScene(
         provider,
         input.photos,
-        buildScenePrompt(input.direction, input.size),
+        buildScenePrompt(input.direction, input.size, input.style),
         input.size,
         quality,
         model

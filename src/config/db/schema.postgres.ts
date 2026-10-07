@@ -650,6 +650,7 @@ export const zombiePreview = table(
     userId: text('user_id'),
     status: text('status').notNull(),
     size: text('size').notNull(),
+    style: text('style').notNull().default('gun'),
     quality: text('quality').notNull().default('low'),
     requestId: text('request_id'),
     sceneImageUrl: text('scene_image_url'),
