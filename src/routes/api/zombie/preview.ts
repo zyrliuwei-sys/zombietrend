@@ -22,6 +22,7 @@ import {
   buildScenePrompt,
   isSceneQuality,
   parseSceneInput,
+  previewImageModel,
   submitScene,
 } from './-pipeline';
 import {
@@ -34,15 +35,31 @@ import {
 
 type PreviewRow = NonNullable<Awaited<ReturnType<typeof findPreview>>>;
 
+// A finished still is held back until this long after the request, so the
+// free preview feels like real work rather than an instant throwaway.
+const MIN_PREVIEW_MS = 90_000;
+
+function isHeld(row: PreviewRow) {
+  const created = new Date(row.createdAt as any).getTime();
+  return (
+    row.status === PreviewStatus.SUCCESS &&
+    Number.isFinite(created) &&
+    Date.now() - created < MIN_PREVIEW_MS
+  );
+}
+
 // The provider URL never reaches the browser: the still is served through
 // /api/zombie/preview-image so the client can only show it watermarked.
 function previewView(row: PreviewRow) {
+  const status = isHeld(row)
+    ? PreviewStatus.PENDING
+    : (row.status as 'pending' | 'success' | 'failed');
   return {
     id: row.id,
-    status: row.status as 'pending' | 'success' | 'failed',
+    status: status as 'pending' | 'success' | 'failed',
     size: row.size,
     imageUrl:
-      row.status === PreviewStatus.SUCCESS
+      status === PreviewStatus.SUCCESS
         ? `/api/zombie/preview-image?id=${row.id}`
         : null,
     animatedTaskId: row.taskId,
@@ -172,7 +189,8 @@ async function POST({ request }: { request: Request }) {
         input.photos,
         buildScenePrompt(input.direction, input.size),
         input.size,
-        quality
+        quality,
+        previewImageModel(configs)
       );
       await updatePreview(row.id, { requestId });
     } catch (error: any) {

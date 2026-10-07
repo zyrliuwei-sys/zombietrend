@@ -26,10 +26,13 @@ export type EvolinkTask = {
 };
 
 export type EvolinkImageRequest = {
+  /** Defaults to gpt-image-2. */
+  model?: string;
   prompt: string;
   imageUrls?: string[];
   /** Ratio ("9:16") or explicit pixels ("720x1280", multiples of 16). */
   size?: string;
+  /** gpt-image-2 only; other models ignore it. */
   quality?: 'low' | 'medium' | 'high';
 };
 
@@ -102,15 +105,19 @@ export class EvolinkProvider {
   }
 
   async createImage(req: EvolinkImageRequest) {
+    const model = req.model || 'gpt-image-2';
+    const isGptImage = model.startsWith('gpt-image');
     const data = await this.request(`${this.baseUrl}/v1/images/generations`, {
       method: 'POST',
       body: JSON.stringify({
-        model: 'gpt-image-2',
+        model,
         prompt: req.prompt,
         ...(req.imageUrls?.length ? { image_urls: req.imageUrls } : {}),
         ...(req.size ? { size: req.size } : {}),
-        ...(req.quality ? { quality: req.quality } : {}),
-        n: 1,
+        // Seedream's `quality` means 1K/2K, not low/medium/high; it's
+        // ignored anyway when `size` is explicit pixels.
+        ...(req.quality && isGptImage ? { quality: req.quality } : {}),
+        ...(isGptImage ? { n: 1 } : {}),
         output_format: 'jpeg',
       }),
     });

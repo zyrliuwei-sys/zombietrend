@@ -208,19 +208,33 @@ export const REFINE_PROMPT = `Re-render this exact image at high quality.
 Keep the same two subjects with the same faces, hairstyles, clothing, poses and positions, the same zombie look, pistol, framing and post-apocalyptic street.
 Only increase detail, sharpness and lighting quality. Do not add, remove or move anything.`;
 
+/**
+ * Model for the free (pre-signup) preview still. Seedream 5.0 Flash is a flat
+ * ~$0.017 per image with two reference photos (gpt-image-2 low measured
+ * $0.018–0.024 on 2026-10-07) and rejects far fewer real-face photos. Paid
+ * runs keep gpt-image-2. Admin can override with zombie_preview_model.
+ */
+export const DEFAULT_PREVIEW_IMAGE_MODEL = 'doubao-seedream-5.0-flash';
+
+export function previewImageModel(configs: Record<string, string>) {
+  return configs.zombie_preview_model?.trim() || DEFAULT_PREVIEW_IMAGE_MODEL;
+}
+
 /** Step 1: two portraits → one scene still. Returns the Evolink task id. */
 export async function submitScene(
   provider: EvolinkProvider,
   photos: string[],
   prompt: string,
   size: ClipSize,
-  quality: SceneQuality = 'medium'
+  quality: SceneQuality = 'medium',
+  model?: string
 ) {
   const { width, height } = sceneSize(size);
   const imageUrls = await Promise.all(
     photos.map((photo) => provider.toPublicUrl(photo))
   );
   return provider.createImage({
+    model,
     prompt,
     imageUrls,
     size: `${width}x${height}`,

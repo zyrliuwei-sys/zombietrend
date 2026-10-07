@@ -930,7 +930,7 @@
   "zombie.create.hint": "Add both photos and confirm consent to start.",
   "zombie.create.ready": "Both photos are set. The free scene preview takes under a minute; the full video about 3-5 minutes.",
   "zombie.create.submitting": "Uploading photos…",
-  "zombie.create.preview_working": "Turning them… your free scene preview usually takes under a minute.",
+  "zombie.create.preview_working": "Turning them… your free scene preview takes about 1–2 minutes. Keep this page open.",
   "zombie.create.preview_ready": "Scene ready. Like it? Turn it into the full zombie love story with sound for {credits} credits, without the watermark.",
   "zombie.create.preview_failed": "the preview didn't come out. It doesn't use up your free try, so please try again.",
   "zombie.create.video_failed": "your credits have been refunded automatically. Please try again.",

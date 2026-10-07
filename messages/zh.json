@@ -930,7 +930,7 @@
   "zombie.create.hint": "上传两张照片并勾选授权确认即可开始。",
   "zombie.create.ready": "照片已就绪。免费画面预览不到 1 分钟，完整视频约 3-5 分钟。",
   "zombie.create.submitting": "正在上传照片…",
-  "zombie.create.preview_working": "正在感染中…免费画面预览通常不到 1 分钟。",
+  "zombie.create.preview_working": "正在感染中…免费画面预览大约需要 1–2 分钟，请不要关闭页面。",
   "zombie.create.preview_ready": "画面已生成。满意的话，用 {credits} 积分把它变成带音效、无水印的完整丧尸爱情故事。",
   "zombie.create.preview_failed": "预览没有生成成功。不占用你的免费次数，请再试一次。",
   "zombie.create.video_failed": "积分已自动退回，请再试一次。",
