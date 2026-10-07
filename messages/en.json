@@ -916,6 +916,8 @@
   "zombie.create.generate": "Generate zombie video",
   "zombie.create.animate": "Make the video, {credits} credits",
   "zombie.create.animate_sign_in": "Sign up free to make the video",
+  "zombie.create.animate_price": "Make this video for just {price}",
+  "zombie.create.preview_ready_price": "Scene ready. Like it? Turn it into the full zombie love story with sound, without the watermark, for just {price}. One-time payment, no subscription.",
   "zombie.create.sign_in": "Sign up free to generate",
   "zombie.create.again": "Make another",
   "zombie.create.start_over": "Start over",

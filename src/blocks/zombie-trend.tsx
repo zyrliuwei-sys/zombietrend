@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { useSession } from '@/core/auth/client';
 import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { pricingCatalog } from '@/config/pricing';
 import {
   HERO_DESKTOP_IMAGE,
   HERO_MOBILE_IMAGE,
@@ -242,28 +243,49 @@ function loadSaved(): Saved | null {
 // Preview the visitor asked to animate before being sent to sign up.
 const RESUME_KEY = 'zt-resume-animate';
 
-function resumeAnimate(previewId?: string) {
+// `checkout` marks a trip to the payment page, so coming back still short of
+// credits (payment cancelled) shows the plans instead of checkout again.
+function resumeAnimate(previewId?: string, checkout = false) {
   try {
     if (previewId) {
       localStorage.setItem(
         RESUME_KEY,
-        JSON.stringify({ previewId, at: Date.now() })
+        JSON.stringify({ previewId, at: Date.now(), checkout })
       );
     }
   } catch {}
 }
 
-/** The pending preview id (if fresh), cleared so it only resumes once. */
-function takeResumeAnimate(): string | undefined {
+/** The pending resume (if fresh), cleared so it only resumes once. */
+function takeResumeAnimate():
+  | { previewId: string; checkout: boolean }
+  | undefined {
   try {
     const raw = localStorage.getItem(RESUME_KEY);
     if (!raw) return undefined;
     localStorage.removeItem(RESUME_KEY);
-    const { previewId, at } = JSON.parse(raw);
-    return Date.now() - at < 60 * 60 * 1000 ? previewId : undefined;
+    const { previewId, at, checkout } = JSON.parse(raw);
+    return Date.now() - at < 60 * 60 * 1000
+      ? { previewId, checkout: !!checkout }
+      : undefined;
   } catch {
     return undefined;
   }
+}
+
+/** Cheapest one-time pack that covers a video of `credits`. */
+function packFor(credits: number) {
+  return Object.values(pricingCatalog)
+    .filter((p) => !p.plan && p.credits >= credits)
+    .sort((a, b) => a.priceInCents - b.priceInCents)[0];
+}
+
+// $5.90 → "$5.90", $10 → "$10".
+function usd(cents: number) {
+  return `$${(cents / 100).toLocaleString('en-US', {
+    minimumFractionDigits: cents % 100 ? 2 : 0,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function saveState(saved: Saved | null) {
@@ -642,6 +664,22 @@ export function ZombieTrendPage() {
     if (lacksCredits()) return openPaywall();
     generate.mutate();
   };
+  // The pack a visitor without enough credits buys to make this video.
+  const pack = price !== undefined ? packFor(price) : undefined;
+  // Straight to checkout for that pack; back on /#create the resume effect
+  // below starts the video as soon as the credits are in.
+  const buyPack = useMutation({
+    mutationFn: () =>
+      apiPost<{ checkout_url?: string }>('/api/payment/checkout', {
+        product_id: pack!.productId,
+        redirect: `${window.location.pathname}#create`,
+      }),
+    onSuccess: (data) => {
+      if (!data?.checkout_url) return openPaywall();
+      window.location.href = data.checkout_url;
+    },
+    onError: () => openPaywall(),
+  });
   const startAnimate = () => {
     track('zt_animate_click', { signed_in: user ? 1 : 0 });
     if (!user) {
@@ -652,23 +690,46 @@ export function ZombieTrendPage() {
       );
       return;
     }
-    if (lacksCredits()) return openPaywall();
+    if (lacksCredits()) {
+      if (!pack) return openPaywall();
+      track('begin_checkout', {
+        plan: pack.productId,
+        value: pack.priceInCents / 100,
+      });
+      resumeAnimate(previewId, true);
+      buyPack.mutate();
+      return;
+    }
     animate.mutate();
   };
 
   const previewReady = preview?.status === 'success' && !taskId;
-  // Back from sign-up with the preview they wanted animated: carry on (or show
-  // the plans) without making them find and click the button again.
+  // Show the price in dollars to anyone who would have to pay for this video
+  // (signed out, or not enough credits); credits for everyone else.
+  const needsToPay =
+    !permissions?.isAdmin &&
+    (!user ||
+      (creditsQuery.data !== undefined &&
+        price !== undefined &&
+        creditsQuery.data.balance < price));
+  const packPrice = needsToPay && pack ? usd(pack.priceInCents) : undefined;
+  const busyAnimate = animate.isPending || buyPack.isPending;
+  // Back from sign-up or checkout with the preview they wanted animated:
+  // carry on without making them find and click the button again. Back from
+  // checkout still short of credits (cancelled) → the plans, not checkout.
   useEffect(() => {
     if (
-      user &&
-      previewReady &&
-      price !== undefined &&
-      creditsQuery.data !== undefined &&
-      takeResumeAnimate() === previewId
+      !user ||
+      !previewReady ||
+      price === undefined ||
+      creditsQuery.data === undefined
     ) {
-      startAnimate();
+      return;
     }
+    const resume = takeResumeAnimate();
+    if (!resume || resume.previewId !== previewId) return;
+    if (resume.checkout && lacksCredits()) return openPaywall();
+    startAnimate();
   }, [user, previewReady, price, creditsQuery.data, previewId]);
   const previewRunning =
     makePreview.isPending || (!!previewId && preview?.status === 'pending');
@@ -965,18 +1026,18 @@ export function ZombieTrendPage() {
                 ) : previewReady ? (
                   <>
                     <button
-                      className={`zt-button ${animate.isPending ? 'zt-disabled' : ''}`}
+                      className={`zt-button ${busyAnimate ? 'zt-disabled' : ''}`}
                       type="button"
-                      disabled={animate.isPending}
+                      disabled={busyAnimate}
                       onClick={startAnimate}
                     >
-                      {animate.isPending && (
+                      {busyAnimate && (
                         <Loader2 size={17} className="animate-spin" />
                       )}
-                      {user
-                        ? m['zombie.create.animate']({ credits })
-                        : m['zombie.create.animate_sign_in']()}
-                      {!animate.isPending && <ArrowRight size={17} />}
+                      {packPrice
+                        ? m['zombie.create.animate_price']({ price: packPrice })
+                        : m['zombie.create.animate']({ credits })}
+                      {!busyAnimate && <ArrowRight size={17} />}
                     </button>
                     <button
                       className="zt-outline"
@@ -1054,7 +1115,11 @@ export function ZombieTrendPage() {
                           : taskId
                             ? `${m['zombie.create.stage_scene']()} ${m['zombie.create.keep_open']()}`
                             : previewReady
-                              ? m['zombie.create.preview_ready']({ credits })
+                              ? packPrice
+                                ? m['zombie.create.preview_ready_price']({
+                                    price: packPrice,
+                                  })
+                                : m['zombie.create.preview_ready']({ credits })
                               : makePreview.isPending
                                 ? m['zombie.create.submitting']()
                                 : previewRunning

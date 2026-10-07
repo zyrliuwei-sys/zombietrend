@@ -916,6 +916,8 @@
   "zombie.create.generate": "生成丧尸视频",
   "zombie.create.animate": "生成视频（{credits} 积分）",
   "zombie.create.animate_sign_in": "免费注册后生成视频",
+  "zombie.create.animate_price": "只需 {price} 生成这个视频",
+  "zombie.create.preview_ready_price": "画面已生成。满意的话，只需 {price} 就能把它变成带音效、无水印的完整丧尸爱情故事。一次性付款，无需订阅。",
   "zombie.create.sign_in": "免费注册后生成",
   "zombie.create.again": "再做一条",
   "zombie.create.start_over": "重新开始",
