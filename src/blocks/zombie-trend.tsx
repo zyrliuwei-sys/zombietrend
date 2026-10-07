@@ -1403,7 +1403,22 @@ export function ZombieTrendPage() {
 
         {paywallMounted && (
           <Suspense fallback={null}>
-            <PaywallDialog open={paywall} onOpenChange={setPaywall} />
+            <PaywallDialog
+              open={paywall}
+              onOpenChange={setPaywall}
+              note={
+                creditsQuery.data &&
+                price !== undefined &&
+                creditsQuery.data.balance < price
+                  ? m['zombie.paywall.low_balance']({
+                      balance:
+                        creditsQuery.data.balance.toLocaleString('en-US'),
+                      credits,
+                      seconds: CLIP_LENGTHS[length],
+                    })
+                  : undefined
+              }
+            />
           </Suspense>
         )}
 

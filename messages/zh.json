@@ -994,6 +994,7 @@
   "zombie.guide.review.title": "发布前先看",
   "zombie.guide.review.text": "检查两张脸、拥抱和回忆。如果人脸跑偏，换一张更清晰的照片或缩短时长。",
   "zombie.paywall.title": "选择套餐，生成你的丧尸视频",
+  "zombie.paywall.low_balance": "你还有 {balance} 积分，这个 {seconds} 秒视频需要 {credits} 积分。充值后即可生成。",
   "zombie.faq.eyebrow": "常见问题",
   "zombie.faq.title": "ZombieTrend AI 常见问题",
   "zombie.faq.zero.question": "ZombieTrend AI 免费吗？",

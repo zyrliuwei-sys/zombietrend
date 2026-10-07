@@ -994,6 +994,7 @@
   "zombie.guide.review.title": "Watch before posting",
   "zombie.guide.review.text": "Check both faces, the hug and the flashback. If a face drifts, try a clearer photo or a shorter length.",
   "zombie.paywall.title": "Pick a plan to make your zombie video",
+  "zombie.paywall.low_balance": "You have {balance} credits — this {seconds}s video needs {credits}. Top up to make it.",
   "zombie.faq.eyebrow": "FAQ",
   "zombie.faq.title": "ZombieTrend AI FAQ",
   "zombie.faq.zero.question": "Is ZombieTrend AI free?",

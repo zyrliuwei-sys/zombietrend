@@ -7,13 +7,21 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 export default function PaywallDialog({
   open,
   onOpenChange,
+  note,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Why the plans are showing, e.g. "you have X credits, this needs Y". */
+  note?: string;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto p-6 sm:max-w-5xl">
+        {note && (
+          <p className="bg-muted rounded-lg px-4 py-3 text-center text-sm font-medium">
+            {note}
+          </p>
+        )}
         <Pricing variant="dialog" title={m['zombie.paywall.title']()} />
       </DialogContent>
     </Dialog>
