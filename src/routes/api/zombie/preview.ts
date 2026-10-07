@@ -156,11 +156,17 @@ async function POST({ request }: { request: Request }) {
       return withDevice(respErr(quota.reason!), ids, request);
     }
 
-    // Free stills default to the cheapest tier (~10× under high); the paid
-    // animate step re-renders them at high quality first.
-    const quality = isSceneQuality(configs.zombie_preview_quality)
-      ? configs.zombie_preview_quality
-      : 'low';
+    // gpt-image-2 free stills default to its cheapest tier and the paid
+    // animate step re-renders them at video quality. Other models (Seedream)
+    // have one flat tier at full 720×1280, so the still is stored as 'high'
+    // and animated as-is — re-rendering a photoreal zombie face through
+    // gpt-image-2 gets blocked by its content filter.
+    const model = previewImageModel(configs);
+    const quality = !model.startsWith('gpt-image')
+      ? 'high'
+      : isSceneQuality(configs.zombie_preview_quality)
+        ? configs.zombie_preview_quality
+        : 'low';
     const row = await createPreview({
       ipHash: ids.ipHash,
       deviceId: ids.deviceId,
@@ -178,7 +184,7 @@ async function POST({ request }: { request: Request }) {
         buildScenePrompt(input.direction, input.size),
         input.size,
         quality,
-        previewImageModel(configs)
+        model
       );
       await updatePreview(row.id, { requestId });
     } catch (error: any) {
