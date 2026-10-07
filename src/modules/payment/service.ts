@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import {
@@ -395,11 +395,35 @@ async function handleCheckoutSuccess(session: any, provider: string) {
       discountAmount: paymentInfo?.discountAmount || null,
     };
 
+    const subNo =
+      subscriptionInfo && session.subscriptionId ? getSnowId() : undefined;
+    if (subNo) {
+      orderUpdate.subscriptionNo = subNo;
+      orderUpdate.subscriptionId = session.subscriptionId;
+      orderUpdate.subscriptionResult = JSON.stringify(
+        session.subscriptionResult
+      );
+    }
+
     // Atomically update order + create subscription + grant credits
     await db().transaction(async (tx: any) => {
-      // 1. Create subscription if applicable
-      if (subscriptionInfo && session.subscriptionId) {
-        const subNo = getSnowId();
+      // 1. Claim the order first. The return-URL callback and the webhook
+      // usually arrive together, and D1 runs this "transaction" without
+      // isolation — only the caller that flips the status may grant.
+      const claimed = await tx
+        .update(order)
+        .set(orderUpdate)
+        .where(
+          and(
+            eq(order.id, existingOrder.id),
+            inArray(order.status, [OrderStatus.CREATED, OrderStatus.PENDING])
+          )
+        )
+        .returning({ id: order.id });
+      if (!claimed.length) return;
+
+      // 2. Create subscription if applicable
+      if (subNo) {
         const newSub: any = {
           id: getUuid(),
           subscriptionNo: subNo,
@@ -428,14 +452,9 @@ async function handleCheckoutSuccess(session: any, provider: string) {
           paymentUserId: paymentInfo?.paymentUserId,
         };
         await tx.insert(subscription).values(newSub);
-        orderUpdate.subscriptionNo = subNo;
-        orderUpdate.subscriptionId = session.subscriptionId;
-        orderUpdate.subscriptionResult = JSON.stringify(
-          session.subscriptionResult
-        );
       }
 
-      // 2. Grant credits if applicable
+      // 3. Grant credits if applicable
       if (existingOrder.creditsAmount && existingOrder.creditsAmount > 0) {
         const credits = existingOrder.creditsAmount;
         const expiresAt = calculateCreditExpirationTime({
@@ -462,12 +481,6 @@ async function handleCheckoutSuccess(session: any, provider: string) {
           status: 'active',
         });
       }
-
-      // 3. Update order
-      await tx
-        .update(order)
-        .set(orderUpdate)
-        .where(eq(order.id, existingOrder.id));
     });
   } else if (
     session.paymentStatus === PaymentStatus.FAILED ||
