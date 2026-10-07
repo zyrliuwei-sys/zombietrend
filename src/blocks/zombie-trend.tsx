@@ -65,6 +65,13 @@ const SiteUserMenu = lazy(() =>
 const PaywallDialog = lazy(() => import('@/blocks/paywall-dialog'));
 
 const previewImage = '/imgs/generated/zt-scene.jpg';
+// Sample scene per story style (same two AI-generated characters), shown in
+// the preview pane until the visitor's own preview arrives.
+const styleImages: Record<ClipStyle, string> = {
+  gun: previewImage,
+  cure: '/imgs/generated/zt-scene-cure.jpg',
+  glass: '/imgs/generated/zt-scene-glass.jpg',
+};
 const coupleImage = '/imgs/generated/zt-couple.jpg';
 const dogImage = '/imgs/generated/zt-dog.jpg';
 const catImage = '/imgs/generated/zt-cat.jpg';
@@ -1210,7 +1217,8 @@ export function ZombieTrendPage() {
                   />
                 ) : (
                   <OptImage
-                    src={previewImage}
+                    key={style}
+                    src={styleImages[style]}
                     alt={m['zombie.hero.image_alt']()}
                     width={1024}
                     height={1536}
