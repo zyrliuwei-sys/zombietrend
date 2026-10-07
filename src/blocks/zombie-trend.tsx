@@ -275,17 +275,15 @@ function saveState(saved: Saved | null) {
   }
 }
 
-// Free stills are drawn onto a canvas with a tiled watermark, so neither
-// "save image" nor a screenshot yields a clean frame.
+// Free stills arrive with the watermark already burned in on the server
+// (api/zombie/preview-image); the canvas just keeps "save image" off.
 function WatermarkedImage({
   src,
   alt,
-  label,
   onError,
 }: {
   src: string;
   alt: string;
-  label: string;
   onError: () => void;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -298,21 +296,6 @@ function WatermarkedImage({
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0);
-      const step = Math.max(canvas.width, canvas.height) / 5;
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(-Math.PI / 6);
-      ctx.font = `700 ${Math.round(step / 6)}px sans-serif`;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
-      ctx.textAlign = 'center';
-      const span = Math.max(canvas.width, canvas.height) * 1.5;
-      const gap = ctx.measureText(label).width + step * 0.6;
-      for (let y = -span, row = 0; y < span; y += step, row++) {
-        for (let x = -span; x < span; x += gap) {
-          ctx.fillText(label, x + (row % 2) * (gap / 2), y);
-        }
-      }
-      ctx.restore();
     };
     img.onerror = onError;
     // Fetched as a blob (not <img src>) so the request is a plain API call;
@@ -331,7 +314,7 @@ function WatermarkedImage({
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [src, label]);
+  }, [src]);
   return (
     <canvas
       ref={ref}
@@ -1102,7 +1085,6 @@ export function ZombieTrendPage() {
                   <WatermarkedImage
                     src={preview.imageUrl}
                     alt={m['zombie.hero.image_alt']()}
-                    label={m['zombie.create.watermark']()}
                     onError={forget}
                   />
                 ) : (

@@ -3,6 +3,7 @@
  * device cookie) and the admin-tunable limits.
  */
 
+import { PreviewStatus } from '@/modules/zombie-preview/service';
 import { getUuid, md5 } from '@/lib/hash';
 
 export const DEVICE_COOKIE = 'zt_did';
@@ -60,4 +61,17 @@ export function visitor(request: Request) {
 export function deviceCookie(deviceId: string, request: Request) {
   const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
   return `${DEVICE_COOKIE}=${deviceId}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax${secure}`;
+}
+
+// A finished still is held back until this long after the request, so the
+// free preview feels like real work rather than an instant throwaway.
+const MIN_PREVIEW_MS = 90_000;
+
+export function isHeld(row: { status: string; createdAt: unknown }) {
+  const created = new Date(row.createdAt as any).getTime();
+  return (
+    row.status === PreviewStatus.SUCCESS &&
+    Number.isFinite(created) &&
+    Date.now() - created < MIN_PREVIEW_MS
+  );
 }

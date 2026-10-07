@@ -29,24 +29,12 @@ import {
   deviceCookie,
   FREE_PREVIEW_PAUSED,
   FREE_PREVIEW_USED,
+  isHeld,
   previewLimits,
   visitor,
 } from './-preview';
 
 type PreviewRow = NonNullable<Awaited<ReturnType<typeof findPreview>>>;
-
-// A finished still is held back until this long after the request, so the
-// free preview feels like real work rather than an instant throwaway.
-const MIN_PREVIEW_MS = 90_000;
-
-function isHeld(row: PreviewRow) {
-  const created = new Date(row.createdAt as any).getTime();
-  return (
-    row.status === PreviewStatus.SUCCESS &&
-    Number.isFinite(created) &&
-    Date.now() - created < MIN_PREVIEW_MS
-  );
-}
 
 // The provider URL never reaches the browser: the still is served through
 // /api/zombie/preview-image so the client can only show it watermarked.
