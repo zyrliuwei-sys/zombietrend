@@ -22,8 +22,14 @@ function readNumber(value: string | undefined, fallback: number) {
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
 }
 
-/** 0 for either limit switches free previews off. */
+/**
+ * Free previews are off unless switched on in admin settings; then 0 for
+ * either limit also switches them off. Off → visitors pay before generating.
+ */
 export function previewLimits(configs: Record<string, string>) {
+  if (configs.zombie_free_preview_enabled !== 'true') {
+    return { dailyCap: 0, perVisitor: 0 };
+  }
   return {
     dailyCap: readNumber(configs.zombie_free_preview_cap, DEFAULT_DAILY_CAP),
     perVisitor: readNumber(

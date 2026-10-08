@@ -985,6 +985,13 @@ export function getSettings(): Setting[] {
       tab: 'ai',
     },
     {
+      name: 'zombie_free_preview_enabled',
+      title: 'Free scene preview for new visitors',
+      type: 'switch',
+      group: 'zombie',
+      tab: 'ai',
+    },
+    {
       name: 'zombie_free_preview_cap',
       title: 'Free previews per day (site-wide)',
       type: 'number',
