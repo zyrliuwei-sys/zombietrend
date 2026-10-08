@@ -51,7 +51,9 @@ export function clipCredits(
  */
 export const CLIP_LENGTHS = { '8': 8, '12': 12, '15': 15 } as const;
 export type ClipLength = keyof typeof CLIP_LENGTHS;
-export const DEFAULT_CLIP_LENGTH: ClipLength = '12';
+// 8 s by default: its 580 credits fit the cheapest pack ($5.90), so the
+// first price a visitor sees is the entry price.
+export const DEFAULT_CLIP_LENGTH: ClipLength = '8';
 
 export function isClipLength(value: unknown): value is ClipLength {
   return typeof value === 'string' && value in CLIP_LENGTHS;

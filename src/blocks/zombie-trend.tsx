@@ -758,8 +758,9 @@ export function ZombieTrendPage() {
   const packPrice = needsToPay && pack ? usd(pack.priceInCents) : undefined;
   const busyAnimate = animate.isPending || buyPack.isPending;
   // Back from sign-up or checkout with the preview they wanted animated:
-  // carry on without making them find and click the button again. Back from
-  // checkout still short of credits (cancelled) → the plans, not checkout.
+  // carry on without making them find and click the button again. Still short
+  // of credits: never open checkout unasked — back from a cancelled checkout
+  // → the plans; fresh from sign-up → stay on the preview and its price.
   useEffect(() => {
     if (
       !user ||
@@ -771,7 +772,7 @@ export function ZombieTrendPage() {
     }
     const resume = takeResumeAnimate();
     if (!resume || resume.previewId !== previewId) return;
-    if (resume.checkout && lacksCredits()) return openPaywall();
+    if (lacksCredits()) return resume.checkout ? openPaywall() : undefined;
     startAnimate();
   }, [user, previewReady, price, creditsQuery.data, previewId]);
   const previewRunning =
