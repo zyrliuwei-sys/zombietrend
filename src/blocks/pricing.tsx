@@ -55,12 +55,15 @@ export function Pricing({
   title,
   variant = 'section',
   redirect,
+  onSignIn,
 }: {
   title?: string;
   /** `dialog` drops the page-section chrome for use inside a modal. */
   variant?: 'section' | 'dialog';
   /** Where checkout returns to (default: the current page). */
   redirect?: string;
+  /** Signed-out click on a plan; replaces the default trip to /sign-in. */
+  onSignIn?: () => void;
 } = {}) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -258,6 +261,7 @@ export function Pricing({
 
   async function handleCheckout(plan: PricingPlan) {
     if (!session?.user) {
+      if (onSignIn) return onSignIn();
       const callbackUrl = encodeURIComponent(currentPathWithQuery('/pricing'));
       router.push(`/sign-in?callbackUrl=${callbackUrl}`);
       return;

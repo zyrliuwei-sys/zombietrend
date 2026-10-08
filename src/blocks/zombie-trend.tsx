@@ -251,30 +251,29 @@ function loadSaved(): Saved | null {
   }
 }
 
-// Preview the visitor asked to animate before being sent to sign up.
+// What the visitor asked for before being sent to sign up or checkout:
+// animate a preview (`previewId`), or generate from the saved form (none).
 const RESUME_KEY = 'zt-resume-animate';
 
 // `checkout` marks a trip to the payment page, so coming back still short of
 // credits (payment cancelled) shows the plans instead of checkout again.
 function resumeAnimate(previewId?: string, checkout = false) {
   try {
-    if (previewId) {
-      localStorage.setItem(
-        RESUME_KEY,
-        JSON.stringify({ previewId, at: Date.now(), checkout })
-      );
-    }
+    localStorage.setItem(
+      RESUME_KEY,
+      JSON.stringify({ previewId, at: Date.now(), checkout })
+    );
   } catch {}
 }
 
-/** The pending resume (if fresh), cleared so it only resumes once. */
-function takeResumeAnimate():
-  | { previewId: string; checkout: boolean }
-  | undefined {
+/** The pending resume (if fresh); `take` clears it so it only resumes once. */
+function takeResumeAnimate(
+  take = true
+): { previewId?: string; checkout: boolean } | undefined {
   try {
     const raw = localStorage.getItem(RESUME_KEY);
     if (!raw) return undefined;
-    localStorage.removeItem(RESUME_KEY);
+    if (take) localStorage.removeItem(RESUME_KEY);
     const { previewId, at, checkout } = JSON.parse(raw);
     return Date.now() - at < 60 * 60 * 1000
       ? { previewId, checkout: !!checkout }
@@ -695,8 +694,14 @@ export function ZombieTrendPage() {
       balance < price
     );
   };
+  // Pay first: anyone who can't afford the video sees the plans; once a pack
+  // is bought (signing up on the way if needed), the resume effect below
+  // starts the video from the saved form.
   const startGenerate = () => {
-    if (lacksCredits()) return openPaywall();
+    if (!user || lacksCredits()) {
+      resumeAnimate(undefined, true);
+      return openPaywall();
+    }
     generate.mutate();
   };
   // The pack a visitor without enough credits needs for this video — its price
@@ -739,17 +744,33 @@ export function ZombieTrendPage() {
   useEffect(() => {
     if (
       !user ||
-      !previewReady ||
+      paywall ||
       price === undefined ||
       creditsQuery.data === undefined
     ) {
       return;
     }
-    const resume = takeResumeAnimate();
-    if (!resume || resume.previewId !== previewId) return;
-    if (lacksCredits()) return resume.checkout ? openPaywall() : undefined;
-    startAnimate();
-  }, [user, previewReady, price, creditsQuery.data, previewId]);
+    const resume = takeResumeAnimate(false);
+    if (!resume) return;
+    // Generate waits for the restored form; animate for its preview.
+    if (resume.previewId ? !previewReady : !draftReady) return;
+    takeResumeAnimate();
+    if (resume.previewId) {
+      if (resume.previewId !== previewId) return;
+      if (lacksCredits()) return resume.checkout ? openPaywall() : undefined;
+      return startAnimate();
+    }
+    if (previewId || taskId || !canGenerate) return;
+    startGenerate();
+  }, [
+    user,
+    previewReady,
+    price,
+    creditsQuery.data,
+    previewId,
+    draftReady,
+    canGenerate,
+  ]);
   const previewRunning =
     makePreview.isPending || (!!previewId && preview?.status === 'pending');
   const taskRunning =
@@ -1114,16 +1135,6 @@ export function ZombieTrendPage() {
                     {m['zombie.create.free_preview']()}
                     {!running && <ArrowRight size={17} />}
                   </button>
-                ) : !user ? (
-                  <Link
-                    className="zt-button"
-                    href={`/sign-up?callbackUrl=${encodeURIComponent('/#create')}`}
-                  >
-                    {packPrice
-                      ? m['zombie.create.make_price']({ price: packPrice })
-                      : m['zombie.create.sign_in']()}{' '}
-                    <ArrowRight size={17} />
-                  </Link>
                 ) : (
                   <button
                     className={`zt-button ${!canGenerate || running ? 'zt-disabled' : ''}`}
@@ -1186,7 +1197,9 @@ export function ZombieTrendPage() {
                                 : previewRunning
                                   ? m['zombie.create.preview_working']()
                                   : photoA && photoB
-                                    ? m['zombie.create.ready']()
+                                    ? freeLeft > 0
+                                      ? m['zombie.create.ready']()
+                                      : m['zombie.create.ready_paid']()
                                     : m['zombie.create.hint']()}
               </p>
             </div>
@@ -1521,6 +1534,13 @@ export function ZombieTrendPage() {
               }}
               // Back to the generator, where the resume effect picks up.
               redirect={`${window.location.pathname}#create`}
+              // Signed out: sign up first, then the plans open again.
+              onSignIn={() => {
+                track('zt_sign_in_prompt');
+                window.location.href = localizeHref(
+                  `/sign-up?callbackUrl=${encodeURIComponent('/#create')}`
+                );
+              }}
               note={
                 creditsQuery.data &&
                 price !== undefined &&

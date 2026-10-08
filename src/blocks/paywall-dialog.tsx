@@ -9,6 +9,7 @@ export default function PaywallDialog({
   onOpenChange,
   note,
   redirect,
+  onSignIn,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -16,6 +17,8 @@ export default function PaywallDialog({
   note?: string;
   /** Where checkout returns to (default: the current page). */
   redirect?: string;
+  /** Signed-out click on a plan (default: go to /sign-in). */
+  onSignIn?: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -29,6 +32,7 @@ export default function PaywallDialog({
           variant="dialog"
           title={m['zombie.paywall.title']()}
           redirect={redirect}
+          onSignIn={onSignIn}
         />
       </DialogContent>
     </Dialog>
