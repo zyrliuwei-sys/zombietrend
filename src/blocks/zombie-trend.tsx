@@ -224,6 +224,7 @@ const DIRECTION_BLOCKED = 'DIRECTION_BLOCKED';
 type Saved = { previewId?: string; taskId?: string; at: number };
 const SAVED_KEY = 'zt-clip';
 const SAVED_TTL = 3 * 24 * 60 * 60 * 1000;
+const PREVIEW_TTL = 23 * 60 * 60 * 1000;
 
 // Unsent form (photos + options) kept in IndexedDB so it survives the
 // sign-in redirect (Google OAuth leaves the site) and reloads. Device-local,
@@ -245,7 +246,11 @@ const DRAFT_TTL = 24 * 60 * 60 * 1000;
 function loadSaved(): Saved | null {
   try {
     const saved = JSON.parse(localStorage.getItem(SAVED_KEY) || 'null');
-    return saved && Date.now() - saved.at < SAVED_TTL ? saved : null;
+    if (!saved || Date.now() - saved.at >= SAVED_TTL) return null;
+    // A preview's still expires with Evolink's 24 h link; only a started
+    // task is worth restoring after that.
+    if (!saved.taskId && Date.now() - saved.at >= PREVIEW_TTL) return null;
+    return saved;
   } catch {
     return null;
   }
@@ -695,6 +700,22 @@ export function ZombieTrendPage() {
       balance < price
     );
   };
+  // Balance covers a shorter clip but not the selected one (e.g. back from
+  // buying the 8 s Single Video pack with the 12 s default still selected):
+  // switch to the longest clip they can afford instead of showing the plans
+  // again right after they paid.
+  const balance = creditsQuery.data?.balance;
+  const lengthPrices = priceQuery.data?.lengths;
+  useEffect(() => {
+    if (!draftReady || permissions?.isAdmin) return;
+    if (balance === undefined || !lengthPrices) return;
+    const selected = lengthPrices[length];
+    if (selected === undefined || balance >= selected) return;
+    const affordable = (Object.keys(CLIP_LENGTHS) as ClipLength[]).filter(
+      (key) => lengthPrices[key] !== undefined && lengthPrices[key] <= balance
+    );
+    if (affordable.length) setLength(affordable[affordable.length - 1]);
+  }, [draftReady, balance, lengthPrices, permissions?.isAdmin]);
   const startGenerate = () => {
     if (lacksCredits()) {
       if (!pack) return openPaywall();

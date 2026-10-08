@@ -45,6 +45,9 @@ import {
   videoSpecFor,
 } from './-pipeline';
 
+// Evolink media links expire after 24 h; leave margin for the refine step.
+const PREVIEW_MAX_AGE_MS = 23 * 60 * 60 * 1000;
+
 // Paid step for a free preview: re-render its still at video quality (skipped
 // if the preview already is that good), then make the video. Same price
 // as a full run — that price already covers a high-quality scene.
@@ -78,8 +81,12 @@ async function POST({ request }: { request: Request }) {
     }
 
     // Framings no longer offered (1:1, 3:4, 16:9) animate badly against the
-    // 9:16 clip — ask for a fresh preview instead.
-    if (!OFFERED_CLIP_SIZES.includes(preview.size as ClipSize)) {
+    // 9:16 clip, and Evolink's still link dies after 24 h (the refine/video
+    // job would fail on it) — ask for a fresh preview instead of charging.
+    if (
+      !OFFERED_CLIP_SIZES.includes(preview.size as ClipSize) ||
+      Date.now() - new Date(preview.createdAt).getTime() > PREVIEW_MAX_AGE_MS
+    ) {
       return respErr('Preview expired, please make a new one');
     }
 
