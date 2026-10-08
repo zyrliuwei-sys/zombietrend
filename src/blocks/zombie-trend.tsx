@@ -291,6 +291,15 @@ function packFor(credits: number) {
     .sort((a, b) => a.priceInCents - b.priceInCents)[0];
 }
 
+// Cheapest pack price, for "from $X" copy.
+const fromPrice = usd(
+  Math.min(
+    ...Object.values(pricingCatalog)
+      .filter((p) => !p.plan)
+      .map((p) => p.priceInCents)
+  )
+);
+
 // $5.90 → "$5.90", $10 → "$10".
 function usd(cents: number) {
   return `$${(cents / 100).toLocaleString('en-US', {
@@ -687,7 +696,15 @@ export function ZombieTrendPage() {
     );
   };
   const startGenerate = () => {
-    if (lacksCredits()) return openPaywall();
+    if (lacksCredits()) {
+      if (!pack) return openPaywall();
+      track('begin_checkout', {
+        plan: pack.productId,
+        value: pack.priceInCents / 100,
+      });
+      buyPack.mutate();
+      return;
+    }
     generate.mutate();
   };
   // The pack a visitor without enough credits buys to make this video.
@@ -774,9 +791,9 @@ export function ZombieTrendPage() {
       : null);
   const freeError =
     freeReason === FREE_PREVIEW_USED
-      ? m['zombie.create.free_used']()
+      ? m['zombie.create.free_used']({ price: fromPrice })
       : freeReason === FREE_PREVIEW_PAUSED
-        ? m['zombie.create.free_paused']()
+        ? m['zombie.create.free_paused']({ price: fromPrice })
         : null;
   const paidError = (e: Error | null) =>
     e?.message === INSUFFICIENT_CREDITS ? null : e?.message;
@@ -1126,7 +1143,10 @@ export function ZombieTrendPage() {
                     className="zt-button"
                     href={`/sign-up?callbackUrl=${encodeURIComponent('/#create')}`}
                   >
-                    {m['zombie.create.sign_in']()} <ArrowRight size={17} />
+                    {packPrice
+                      ? m['zombie.create.make_price']({ price: packPrice })
+                      : m['zombie.create.sign_in']()}{' '}
+                    <ArrowRight size={17} />
                   </Link>
                 ) : (
                   <button
@@ -1135,9 +1155,13 @@ export function ZombieTrendPage() {
                     disabled={!canGenerate || running}
                     onClick={startGenerate}
                   >
-                    {running && <Loader2 size={17} className="animate-spin" />}
-                    {m['zombie.create.generate']()}
-                    {!running && <ArrowRight size={17} />}
+                    {(running || buyPack.isPending) && (
+                      <Loader2 size={17} className="animate-spin" />
+                    )}
+                    {packPrice
+                      ? m['zombie.create.make_price']({ price: packPrice })
+                      : m['zombie.create.generate']()}
+                    {!running && !buyPack.isPending && <ArrowRight size={17} />}
                   </button>
                 )}
                 {task?.videoUrl && (

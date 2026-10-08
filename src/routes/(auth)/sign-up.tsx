@@ -185,6 +185,12 @@ function SignUpPage() {
             <CardTitle className="text-xl">
               {m['common.sign.sign_up_title']()}
             </CardTitle>
+            {/* Sent here from the homepage generator: say what happens next. */}
+            {safeCallbackUrl?.includes('#create') && (
+              <p className="text-muted-foreground mt-2 text-sm">
+                {m['common.sign.video_context']()}
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             {configsLoaded && !hasAnyMethod ? (
