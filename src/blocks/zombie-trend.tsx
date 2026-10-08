@@ -696,33 +696,12 @@ export function ZombieTrendPage() {
     );
   };
   const startGenerate = () => {
-    if (lacksCredits()) {
-      if (!pack) return openPaywall();
-      track('begin_checkout', {
-        plan: pack.productId,
-        value: pack.priceInCents / 100,
-      });
-      buyPack.mutate();
-      return;
-    }
+    if (lacksCredits()) return openPaywall();
     generate.mutate();
   };
-  // The pack a visitor without enough credits buys to make this video.
+  // The pack a visitor without enough credits needs for this video — its price
+  // is what the button shows.
   const pack = price !== undefined ? packFor(price) : undefined;
-  // Straight to checkout for that pack; back on /#create the resume effect
-  // below starts the video as soon as the credits are in.
-  const buyPack = useMutation({
-    mutationFn: () =>
-      apiPost<{ checkout_url?: string }>('/api/payment/checkout', {
-        product_id: pack!.productId,
-        redirect: `${window.location.pathname}#create`,
-      }),
-    onSuccess: (data) => {
-      if (!data?.checkout_url) return openPaywall();
-      window.location.href = data.checkout_url;
-    },
-    onError: () => openPaywall(),
-  });
   const startAnimate = () => {
     track('zt_animate_click', { signed_in: user ? 1 : 0 });
     if (!user) {
@@ -733,15 +712,11 @@ export function ZombieTrendPage() {
       );
       return;
     }
+    // Plans first, never straight to PayPal; once a pack is bought there, the
+    // resume effect below starts this video on the way back.
     if (lacksCredits()) {
-      if (!pack) return openPaywall();
-      track('begin_checkout', {
-        plan: pack.productId,
-        value: pack.priceInCents / 100,
-      });
       resumeAnimate(previewId, true);
-      buyPack.mutate();
-      return;
+      return openPaywall();
     }
     animate.mutate();
   };
@@ -756,7 +731,7 @@ export function ZombieTrendPage() {
         price !== undefined &&
         creditsQuery.data.balance < price));
   const packPrice = needsToPay && pack ? usd(pack.priceInCents) : undefined;
-  const busyAnimate = animate.isPending || buyPack.isPending;
+  const busyAnimate = animate.isPending;
   // Back from sign-up or checkout with the preview they wanted animated:
   // carry on without making them find and click the button again. Still short
   // of credits: never open checkout unasked — back from a cancelled checkout
@@ -1156,13 +1131,11 @@ export function ZombieTrendPage() {
                     disabled={!canGenerate || running}
                     onClick={startGenerate}
                   >
-                    {(running || buyPack.isPending) && (
-                      <Loader2 size={17} className="animate-spin" />
-                    )}
+                    {running && <Loader2 size={17} className="animate-spin" />}
                     {packPrice
                       ? m['zombie.create.make_price']({ price: packPrice })
                       : m['zombie.create.generate']()}
-                    {!running && !buyPack.isPending && <ArrowRight size={17} />}
+                    {!running && <ArrowRight size={17} />}
                   </button>
                 )}
                 {task?.videoUrl && (
@@ -1541,7 +1514,13 @@ export function ZombieTrendPage() {
           <Suspense fallback={null}>
             <PaywallDialog
               open={paywall}
-              onOpenChange={setPaywall}
+              onOpenChange={(open) => {
+                setPaywall(open);
+                // Closed without buying: don't reopen the plans on reload.
+                if (!open) takeResumeAnimate();
+              }}
+              // Back to the generator, where the resume effect picks up.
+              redirect={`${window.location.pathname}#create`}
               note={
                 creditsQuery.data &&
                 price !== undefined &&

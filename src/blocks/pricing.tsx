@@ -54,10 +54,13 @@ const ALL_PROVIDERS: PaymentProvider[] = [
 export function Pricing({
   title,
   variant = 'section',
+  redirect,
 }: {
   title?: string;
   /** `dialog` drops the page-section chrome for use inside a modal. */
   variant?: 'section' | 'dialog';
+  /** Where checkout returns to (default: the current page). */
+  redirect?: string;
 } = {}) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -228,7 +231,7 @@ export function Pricing({
         credits_valid_days: plan.creditsValidDays,
         payment_provider: provider,
         // Come back to the page the user paid from.
-        redirect: currentPathWithQuery('/settings/billing'),
+        redirect: redirect ?? currentPathWithQuery('/settings/billing'),
       }),
     onSuccess: (data) => {
       if (!data?.checkout_url) {

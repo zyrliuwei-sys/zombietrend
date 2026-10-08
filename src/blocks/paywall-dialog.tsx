@@ -8,11 +8,14 @@ export default function PaywallDialog({
   open,
   onOpenChange,
   note,
+  redirect,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Why the plans are showing, e.g. "you have X credits, this needs Y". */
   note?: string;
+  /** Where checkout returns to (default: the current page). */
+  redirect?: string;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -22,7 +25,11 @@ export default function PaywallDialog({
             {note}
           </p>
         )}
-        <Pricing variant="dialog" title={m['zombie.paywall.title']()} />
+        <Pricing
+          variant="dialog"
+          title={m['zombie.paywall.title']()}
+          redirect={redirect}
+        />
       </DialogContent>
     </Dialog>
   );
