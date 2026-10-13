@@ -30,13 +30,15 @@ interface Props {
   price?: string;
 }
 
-const providerLabel: Record<PaymentProvider, string> = {
-  stripe: 'Stripe',
-  creem: 'Creem',
-  waffo: 'Waffo Pancake',
-  paypal: 'PayPal',
-  alipay: 'Alipay',
-  wechat: 'WeChat Pay',
+// Waffo is a card checkout most buyers have never heard of — label it by
+// what it takes, not by brand.
+const providerLabel: Record<PaymentProvider, () => string> = {
+  stripe: () => 'Stripe',
+  creem: () => 'Creem',
+  waffo: () => m['common.pricing.provider_card'](),
+  paypal: () => 'PayPal',
+  alipay: () => 'Alipay',
+  wechat: () => 'WeChat Pay',
 };
 
 export function PaymentProviderModal({
@@ -78,7 +80,7 @@ export function PaymentProviderModal({
                 ) : (
                   <CreditCard className="size-4" />
                 )}
-                <span>{providerLabel[p]}</span>
+                <span>{providerLabel[p]()}</span>
               </Button>
             );
           })}

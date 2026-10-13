@@ -68,6 +68,7 @@
   "common.pricing.get_started": "Get Started",
   "common.pricing.processing": "Processing...",
   "common.pricing.choose_payment": "Choose payment method",
+  "common.pricing.provider_card": "Credit / Debit Card",
   "common.pricing.choose_payment_desc": "Pick how you'd like to pay.",
   "common.pricing.payment_for": "{plan} — {price}",
   "common.pricing.payment_for_plan": "{plan}",

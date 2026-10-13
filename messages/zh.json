@@ -68,6 +68,7 @@
   "common.pricing.get_started": "立即开始",
   "common.pricing.processing": "处理中...",
   "common.pricing.choose_payment": "选择支付方式",
+  "common.pricing.provider_card": "信用卡 / 借记卡",
   "common.pricing.choose_payment_desc": "选择你想使用的支付渠道。",
   "common.pricing.payment_for": "{plan} — {price}",
   "common.pricing.payment_for_plan": "{plan}",
