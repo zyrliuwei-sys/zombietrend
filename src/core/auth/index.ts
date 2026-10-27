@@ -111,7 +111,7 @@ function getSocialSignature(configs: Record<string, string>) {
  * Build the configured email provider from admin settings.
  * Returns null if the chosen provider is not fully configured.
  */
-function getEmailProvider(
+export function getEmailProvider(
   configs: Record<string, string>
 ): { provider: EmailProvider; from: string } | null {
   const selected = configs.email_provider || 'resend';

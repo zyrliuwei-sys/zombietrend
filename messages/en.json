@@ -947,6 +947,8 @@
   "zombie.create.preview_ready": "Scene ready. Like it? Turn it into the full zombie love story with sound for {credits} credits, without the watermark.",
   "zombie.create.preview_failed": "the preview didn't come out. It doesn't use up your free try, so please try again.",
   "zombie.create.video_failed": "your credits have been refunded automatically. Please try again.",
+  "zombie.create.service_busy": "the service is busy right now. Your credits have been refunded automatically, please try again in a few minutes.",
+  "zombie.create.service_busy_preview": "the service is busy right now. It doesn't use up your free try, please try again in a few minutes.",
   "zombie.create.failed": "Generation failed",
   "zombie.create.stage_scene": "Step 1 of 2: building the zombie scene…",
   "zombie.create.stage_motion": "Step 2 of 2: filming the story with sound (about 3-5 min)…",

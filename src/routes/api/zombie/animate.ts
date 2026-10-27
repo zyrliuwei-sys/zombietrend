@@ -35,6 +35,7 @@ import { respData, respErr } from '@/lib/resp';
 
 import { DIRECTION_BLOCKED, isBlockedDirection } from './-direction-filter';
 import {
+  fail,
   meetsQuality,
   PIPELINE_MODEL,
   REFINE_PROMPT,
@@ -44,6 +45,7 @@ import {
   videoSceneQuality,
   videoSpecFor,
 } from './-pipeline';
+import { isOutOfFunds, SERVICE_BUSY } from './-provider-funds';
 
 // Paid step for a free preview: re-render its still at video quality (skipped
 // if the preview already is that good), then make the video. Same price
@@ -153,11 +155,8 @@ async function POST({ request }: { request: Request }) {
         await mergeTaskInfo(task.id, { imageRequestId, videoSpec });
       }
     } catch (error: any) {
-      await updateTask({
-        taskId: task.id,
-        status: AITaskStatus.FAILED,
-        taskResult: { error: error?.message },
-      });
+      await fail(task.id, error?.message || 'Animate failed');
+      if (isOutOfFunds(error)) return respErr(SERVICE_BUSY);
       throw error;
     }
 

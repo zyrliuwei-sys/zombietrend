@@ -12,7 +12,6 @@ import {
   AITaskStatus,
   createTask,
   mergeTaskInfo,
-  updateTask,
 } from '@/modules/ai-tasks/service';
 import { getAllConfigs } from '@/modules/config/service';
 import { screenPrompt } from '@/modules/content-safety/service';
@@ -23,6 +22,7 @@ import { respData, respErr } from '@/lib/resp';
 import { DIRECTION_BLOCKED, isBlockedDirection } from './-direction-filter';
 import {
   buildScenePrompt,
+  fail,
   parseSceneInput,
   PIPELINE_MODEL,
   submitScene,
@@ -30,6 +30,7 @@ import {
   videoSceneQuality,
   videoSpecFor,
 } from './-pipeline';
+import { isOutOfFunds, SERVICE_BUSY } from './-provider-funds';
 
 async function POST({ request }: { request: Request }) {
   try {
@@ -85,11 +86,8 @@ async function POST({ request }: { request: Request }) {
       );
       await mergeTaskInfo(task.id, { imageRequestId, videoSpec });
     } catch (error: any) {
-      await updateTask({
-        taskId: task.id,
-        status: AITaskStatus.FAILED,
-        taskResult: { error: error?.message },
-      });
+      await fail(task.id, error?.message || 'Generate failed');
+      if (isOutOfFunds(error)) return respErr(SERVICE_BUSY);
       throw error;
     }
 

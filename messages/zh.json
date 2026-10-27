@@ -947,6 +947,8 @@
   "zombie.create.preview_ready": "画面已生成。满意的话，用 {credits} 积分把它变成带音效、无水印的完整丧尸爱情故事。",
   "zombie.create.preview_failed": "预览没有生成成功。不占用你的免费次数，请再试一次。",
   "zombie.create.video_failed": "积分已自动退回，请再试一次。",
+  "zombie.create.service_busy": "服务繁忙，积分已自动退回，请几分钟后再试。",
+  "zombie.create.service_busy_preview": "服务繁忙，不占用你的免费次数，请几分钟后再试。",
   "zombie.create.failed": "生成失败",
   "zombie.create.stage_scene": "第 1/2 步：正在合成丧尸场景…",
   "zombie.create.stage_motion": "第 2/2 步：正在拍摄带音效的故事（约 3-5 分钟）…",

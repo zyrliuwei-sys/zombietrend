@@ -52,6 +52,8 @@ import {
   type findPreview,
 } from '@/modules/zombie-preview/service';
 
+import { userFacingError } from './-provider-funds';
+
 // Admin can switch to 'seedance-2.0-image-to-video' (sharper; credits are
 // priced at the standard rate either way — see config/zombie-pricing.ts).
 export const DEFAULT_VIDEO_MODEL = 'seedance-2.0-fast-image-to-video';
@@ -529,11 +531,14 @@ function isTransient(error: any) {
 // nothing will ever finish it, so fail and refund instead of a 3 h wait.
 const MOTION_SUBMIT_TIMEOUT_MS = 10 * 60 * 1000;
 
-async function fail(taskId: string, message: string) {
+/** Fail (and refund) a task; our own Evolink balance running out shows as SERVICE_BUSY. */
+export async function fail(taskId: string, message: string) {
+  const error = await userFacingError(message, 'Generation failed');
   await updateTask({
     taskId,
     status: AITaskStatus.FAILED,
-    taskResult: { error: message },
+    taskResult:
+      error === message ? { error } : { error, providerError: message },
   });
 }
 
@@ -639,7 +644,7 @@ export async function advancePreview(
     if (isTransient(error)) return;
     await updatePreview(row.id, {
       status: PreviewStatus.FAILED,
-      error: error?.message || 'Preview failed',
+      error: await userFacingError(error, 'Preview failed'),
     });
   }
 }

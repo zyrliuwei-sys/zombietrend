@@ -220,6 +220,8 @@ type FreeQuota = { left: number; reason: string | null };
 const FREE_PREVIEW_USED = 'FREE_PREVIEW_USED';
 const FREE_PREVIEW_PAUSED = 'FREE_PREVIEW_PAUSED';
 const DIRECTION_BLOCKED = 'DIRECTION_BLOCKED';
+// Our provider account ran out of balance: not the visitor's fault.
+const SERVICE_BUSY = 'SERVICE_BUSY';
 
 type Saved = { previewId?: string; taskId?: string; at: number };
 const SAVED_KEY = 'zt-clip';
@@ -793,7 +795,11 @@ export function ZombieTrendPage() {
         ? m['zombie.create.free_paused']({ price: fromPrice })
         : null;
   const paidError = (e: Error | null) =>
-    e?.message === INSUFFICIENT_CREDITS ? null : e?.message;
+    e?.message === INSUFFICIENT_CREDITS
+      ? null
+      : e?.message === SERVICE_BUSY
+        ? m['zombie.create.service_busy']()
+        : e?.message;
   const blockedNote =
     [generate.error, makePreview.error].some(
       (e) => e?.message === DIRECTION_BLOCKED
@@ -802,12 +808,18 @@ export function ZombieTrendPage() {
     (blockedNote || null) ??
     paidError(generate.error) ??
     paidError(animate.error) ??
-    (freeError ? null : makePreview.error?.message) ??
+    (freeError ? null : paidError(makePreview.error)) ??
     // Provider errors mean nothing to the visitor; say what it cost them.
     (preview?.status === 'failed' && !taskId
-      ? m['zombie.create.preview_failed']()
+      ? preview.error === SERVICE_BUSY
+        ? m['zombie.create.service_busy_preview']()
+        : m['zombie.create.preview_failed']()
       : null) ??
-    (task?.status === 'failed' ? m['zombie.create.video_failed']() : null) ??
+    (task?.status === 'failed'
+      ? task.error === SERVICE_BUSY
+        ? m['zombie.create.service_busy']()
+        : m['zombie.create.video_failed']()
+      : null) ??
     null;
   // The inline status line is easy to miss below the button; also toast.
   useEffect(() => {

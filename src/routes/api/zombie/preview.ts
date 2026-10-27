@@ -33,6 +33,7 @@ import {
   previewLimits,
   visitor,
 } from './-preview';
+import { SERVICE_BUSY, userFacingError } from './-provider-funds';
 
 type PreviewRow = NonNullable<Awaited<ReturnType<typeof findPreview>>>;
 
@@ -189,10 +190,12 @@ async function POST({ request }: { request: Request }) {
       );
       await updatePreview(row.id, { requestId });
     } catch (error: any) {
+      const message = await userFacingError(error, 'Preview failed');
       await updatePreview(row.id, {
         status: PreviewStatus.FAILED,
-        error: error?.message || 'Preview failed',
+        error: message,
       });
+      if (message === SERVICE_BUSY) return respErr(SERVICE_BUSY);
       throw error;
     }
 

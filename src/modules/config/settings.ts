@@ -765,6 +765,15 @@ export function getSettings(): Setting[] {
       tab: 'email',
       defaultValue: 'true',
     },
+    {
+      name: 'ops_alert_email',
+      title: 'Ops alert email',
+      type: 'text',
+      placeholder: 'you@example.com',
+      tip: 'Gets an email (at most hourly) when the Evolink balance runs out and generations fail',
+      group: 'email_general',
+      tab: 'email',
+    },
 
     // ─── Email / Resend ──────────────────────────────────────────────
     {
