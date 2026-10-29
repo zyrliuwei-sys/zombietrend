@@ -34,8 +34,16 @@ import '@/styles/globals.css';
 // server function so drizzle/db code never reaches the client bundle.
 const getAnalyticsConfigs = createServerFn().handler(async () => {
   const { getAllConfigs } = await import('@/modules/config/service');
-  const configs = await getAllConfigs();
+  const { getStoredFooterBadges } =
+    await import('@/modules/footer-badges/service');
+  const [configs, storedFooterBadges] = await Promise.all([
+    getAllConfigs(),
+    getStoredFooterBadges(),
+  ]);
   return {
+    // Raw stored list (null = never saved) so footer badges are in the SSR
+    // HTML — listing sites crawl it for the backlink.
+    footerBadges: storedFooterBadges ?? null,
     gaId: configs.google_analytics_id?.trim() || '',
     plausibleDomain: configs.plausible_domain?.trim() || '',
     plausibleSrc: configs.plausible_src?.trim() || '',
