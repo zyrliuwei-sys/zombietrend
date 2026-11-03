@@ -31,18 +31,26 @@ function AdminFooterBadgesPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (nextBadges: FooterBadge[]) =>
+    mutationFn: (
+      change:
+        | { action: 'add'; badges: FooterBadge[] }
+        | { action: 'remove'; badge: FooterBadge }
+    ) =>
       apiPost<FooterBadge[]>('/api/admin/footer-badges', {
-        badges: nextBadges,
+        ...change,
       }),
     onSuccess: (savedBadges) => {
       queryClient.setQueryData(queryKey, savedBadges);
+      queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ['public-config'] });
       toast.success(m['admin.footer_badges.saved']());
       setMarkup('');
       setInputError(false);
     },
-    onError: () => toast.error(m['admin.footer_badges.save_error']()),
+    onError: (error: Error) => {
+      toast.error(error.message || m['admin.footer_badges.save_error']());
+      queryClient.invalidateQueries({ queryKey });
+    },
   });
 
   useEffect(() => {
@@ -53,18 +61,21 @@ function AdminFooterBadgesPage() {
     setInputError(false);
     try {
       const parsed = parseFooterBadgeMarkup(markup);
-      if (badges.length + parsed.length > MAX_FOOTER_BADGES) {
+      if (
+        new Set([...badges, ...parsed].map((b) => b.href)).size >
+        MAX_FOOTER_BADGES
+      ) {
         setInputError(true);
         return;
       }
-      saveMutation.mutate([...badges, ...parsed]);
+      saveMutation.mutate({ action: 'add', badges: parsed });
     } catch {
       setInputError(true);
     }
   }
 
   function removeBadge(index: number) {
-    saveMutation.mutate(badges.filter((_, itemIndex) => itemIndex !== index));
+    saveMutation.mutate({ action: 'remove', badge: badges[index] });
   }
 
   return (
@@ -118,7 +129,9 @@ function AdminFooterBadgesPage() {
             <Button
               type="button"
               onClick={addBadge}
-              disabled={saveMutation.isPending || isLoading}
+              disabled={
+                saveMutation.isPending || isLoading || isError || !markup.trim()
+              }
             >
               {saveMutation.isPending ? (
                 m['admin.footer_badges.adding']()
@@ -150,18 +163,22 @@ function AdminFooterBadgesPage() {
             <ul className="space-y-3">
               {badges.map((badge, index) => (
                 <li
-                  key={`${badge.href}:${badge.src}`}
+                  key={`${index}:${badge.href}:${badge.src}`}
                   className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 space-y-2">
                     <div className="flex min-h-12 items-center">
-                      <img
-                        src={badge.src}
-                        alt={badge.alt}
-                        width={badge.width ?? 250}
-                        height={badge.height}
-                        className="h-auto max-h-16 max-w-full"
-                      />
+                      {badge.src ? (
+                        <img
+                          src={badge.src}
+                          alt={badge.alt}
+                          width={badge.width ?? 250}
+                          height={badge.height}
+                          className="h-auto max-h-16 max-w-full"
+                        />
+                      ) : (
+                        <span>{badge.text || badge.alt}</span>
+                      )}
                     </div>
                     <p className="text-muted-foreground truncate text-xs">
                       {badge.href}

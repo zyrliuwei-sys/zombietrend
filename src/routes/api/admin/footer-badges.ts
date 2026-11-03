@@ -1,16 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { DEFAULT_FOOTER_BADGES } from '@/features/footer-badges/defaults';
+import { parseStoredFooterBadges } from '@/features/footer-badges/validation';
 import {
-  parseStoredFooterBadges,
-  validateFooterBadges,
-} from '@/features/footer-badges/validation';
+  changeStoredFooterBadges,
+  FooterBadgeConflict,
+} from '@/server/footer-badges';
 
 import { getAuth } from '@/core/auth';
-import {
-  getStoredFooterBadges,
-  saveStoredFooterBadges,
-} from '@/modules/footer-badges/service';
+import { getStoredFooterBadges } from '@/modules/footer-badges/service';
 import { hasPermission } from '@/modules/rbac/service';
+import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
 
 const noStore = {
@@ -29,13 +28,13 @@ async function checkSuperAdmin(request: Request) {
   const allowed = await hasPermission(session.user.id, '*');
   if (!allowed) return respErr('Forbidden', { status: 403 });
 
-  return null;
+  return { userId: session.user.id };
 }
 
 async function GET({ request }: { request: Request }) {
   try {
     const denied = await checkSuperAdmin(request);
-    if (denied) return denied;
+    if (denied instanceof Response) return denied;
     const stored = await getStoredFooterBadges();
     return respData(
       stored === undefined
@@ -50,18 +49,34 @@ async function GET({ request }: { request: Request }) {
 
 async function POST({ request }: { request: Request }) {
   try {
+    const ipLimited = enforceMinIntervalRateLimit(request, {
+      intervalMs: 100,
+      keyPrefix: 'footer-badges-ip',
+    });
+    if (ipLimited) return ipLimited;
     const denied = await checkSuperAdmin(request);
-    if (denied) return denied;
+    if (denied instanceof Response) return denied;
+    const userLimited = enforceMinIntervalRateLimit(request, {
+      intervalMs: 250,
+      keyPrefix: 'footer-badges-user',
+      extraKey: denied.userId,
+    });
+    if (userLimited) return userLimited;
     const body = await request.json();
-    if (!body || typeof body !== 'object' || !('badges' in body)) {
-      return respErr('Invalid footer badges payload');
-    }
-
-    const badges = validateFooterBadges(body.badges);
-    await saveStoredFooterBadges(JSON.stringify(badges));
+    if (
+      !body ||
+      typeof body !== 'object' ||
+      !['add', 'remove', 'replace'].includes(body.action)
+    )
+      return respErr('Refresh the page before editing badges.', {
+        status: 400,
+      });
+    const badges = await changeStoredFooterBadges(body);
     return respData(badges, noStore);
   } catch (error) {
-    return respErr(error instanceof Error ? error.message : 'Internal error');
+    return respErr(error instanceof Error ? error.message : 'Internal error', {
+      status: error instanceof FooterBadgeConflict ? 409 : 400,
+    });
   }
 }
 

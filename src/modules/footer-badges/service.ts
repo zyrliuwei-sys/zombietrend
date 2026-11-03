@@ -1,34 +1,47 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import { config } from '@/config/db/schema';
 
 const CONFIG_KEY = 'footer_badges';
+export type FooterBadgeSnapshot = { value: string | null } | undefined;
 
-/** Read directly so separate server instances cannot serve stale config cache data. */
-export async function getStoredFooterBadges(): Promise<string | undefined> {
+export async function getFooterBadgeSnapshot(): Promise<FooterBadgeSnapshot> {
   const [row] = await db()
     .select({ value: config.value })
     .from(config)
     .where(eq(config.name, CONFIG_KEY))
     .limit(1);
-
-  return row?.value ?? undefined;
+  return row;
 }
 
-/** Store the validated badge list in the shared config table. */
-export async function saveStoredFooterBadges(value: string): Promise<void> {
-  await db().transaction(async (tx: any) => {
-    const [existing] = await tx
-      .select({ name: config.name })
-      .from(config)
-      .where(eq(config.name, CONFIG_KEY))
-      .limit(1);
+/** Bypass the per-instance config cache so crawlers see the latest badges. */
+export async function getStoredFooterBadges(): Promise<string | undefined> {
+  return (await getFooterBadgeSnapshot())?.value ?? undefined;
+}
 
-    if (existing) {
-      await tx.update(config).set({ value }).where(eq(config.name, CONFIG_KEY));
-    } else {
-      await tx.insert(config).values({ name: CONFIG_KEY, value });
-    }
-  });
+/** One conditional write: safe on D1 without interactive transactions. */
+export async function compareAndSwapFooterBadges(
+  previous: FooterBadgeSnapshot,
+  value: string
+): Promise<boolean> {
+  const saved = previous
+    ? await db()
+        .update(config)
+        .set({ value })
+        .where(
+          and(
+            eq(config.name, CONFIG_KEY),
+            previous.value === null
+              ? isNull(config.value)
+              : eq(config.value, previous.value)
+          )
+        )
+        .returning({ name: config.name })
+    : await db()
+        .insert(config)
+        .values({ name: CONFIG_KEY, value })
+        .onConflictDoNothing()
+        .returning({ name: config.name });
+  return saved.length > 0;
 }

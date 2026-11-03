@@ -6,6 +6,7 @@ import { parseStoredFooterBadges } from '@/features/footer-badges/validation';
 
 import { cn } from '@/lib/utils';
 import { usePublicConfig } from '@/hooks/use-public-config';
+import { FooterBadgeLink } from '@/components/footer-badge-link';
 
 /** Each marquee half repeats the list until it holds at least this many badges, so short lists still span wide screens. */
 const MIN_BADGES_PER_LOOP = 12;
@@ -28,23 +29,12 @@ function BadgeRow({
           key={`${index}:${badge.href}:${badge.src}`}
           className="shrink-0 pr-4"
         >
-          <a
-            href={badge.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            tabIndex={hidden ? -1 : undefined}
+          <FooterBadgeLink
+            badge={badge}
+            hidden={hidden}
             className="flex h-12 items-center transition-opacity hover:opacity-80"
-          >
-            <img
-              src={badge.src}
-              alt={hidden ? '' : badge.alt}
-              width={badge.width ?? 250}
-              height={badge.height}
-              loading="lazy"
-              draggable={false}
-              className="h-full w-auto max-w-[260px] object-contain"
-            />
-          </a>
+            imageClassName="h-full w-auto max-w-[260px] object-contain"
+          />
         </li>
       ))}
     </ul>

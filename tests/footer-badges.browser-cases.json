@@ -1,0 +1,65 @@
+[
+  {
+    "name": "LaunchAI metadata",
+    "html": "<a href=\"https://launchai.tools\" data-launchai-badge=\"featured\" aria-label=\"LaunchAI\" title=\"LaunchAI\"><img src=\"https://launchai.tools/badge.svg\" alt=\"Featured\" /></a>",
+    "ok": true,
+    "attribute": "featured"
+  },
+  {
+    "name": "Text-only link",
+    "html": "<a href=\"https://describepicture.cc/\" title=\"AI Image Describer\">AI Image Describer</a>",
+    "ok": true,
+    "text": "AI Image Describer"
+  },
+  {
+    "name": "Existing image",
+    "html": "<a href=\"https://example.com\" target=\"_blank\"><img src=\"https://example.com/a.svg\" width=250 alt=\"Featured\" /></a>",
+    "ok": true
+  },
+  {
+    "name": "Event handler",
+    "html": "<a href=\"https://example.com\" onclick=\"alert(1)\">Test</a>",
+    "ok": false
+  },
+  {
+    "name": "Script",
+    "html": "<script>alert(1)</script><a href=\"https://example.com\">Test</a>",
+    "ok": false
+  },
+  {
+    "name": "Inline SVG",
+    "html": "<a href=\"https://example.com\"><svg onload=\"alert(1)\"></svg></a>",
+    "ok": false
+  },
+  {
+    "name": "Javascript URL",
+    "html": "<a href=\"javascript:alert(1)\">Test</a>",
+    "ok": false
+  },
+  {
+    "name": "Image event",
+    "html": "<a href=\"https://example.com\"><img src=\"https://example.com/a.png\" alt=\"A\" onerror=\"alert(1)\"></a>",
+    "ok": false
+  },
+  {
+    "name": "Harmless width style",
+    "html": "<a href=\"https://example.com\"><img src=\"https://example.com/a.svg\" alt=\"A\" style=\"width:250px;\" /></a>",
+    "ok": true,
+    "width": 250
+  },
+  {
+    "name": "Active CSS rejected",
+    "html": "<a href=\"https://example.com\" style=\"background:url(https://evil.example)\">A</a>",
+    "ok": false
+  },
+  {
+    "name": "Official image without alt",
+    "html": "<a href=\"https://example.com\"><img src=\"https://example.com/badge.svg\"></a>",
+    "ok": true
+  },
+  {
+    "name": "Text between 120 and 200 characters",
+    "html": "<a href=\"https://example.com\">Directory Directory Directory Directory Directory Directory Directory Directory Directory Directory Directory Directory Directory Directory Directory </a>",
+    "ok": true
+  }
+]
