@@ -24,7 +24,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "test:footer-badges": "node --import tsx --test tests/footer-badges.test.tsx tests/footer-badges-storage.test.ts",
+    "test:footer-badges": "node --import tsx --test tests/footer-badges.test.tsx tests/footer-badges-storage.test.ts tests/footer-badge-automation.test.ts",
     "test:footer-badges:d1": "BADGES_D1=1 node --import tsx --test tests/footer-badges-storage.test.ts"
   },
   "lint-staged": {

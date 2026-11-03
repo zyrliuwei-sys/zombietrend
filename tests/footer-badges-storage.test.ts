@@ -152,3 +152,47 @@ test('NULL legacy config can be updated without an insert conflict', async () =>
   await changeStoredFooterBadges({ action: 'add', badges: [badge('one')] });
   assert.ok((await stored()).some((b: any) => b.href === badge('one').href));
 });
+
+test('authenticated automation persists and renders a badge, and retry cannot duplicate it', async () => {
+  const { createFooterBadgeAutomationHandler, hashBadgeToken } =
+    await import('../src/server/footer-badge-automation');
+  const { FooterBadgeLink } =
+    await import('../src/components/footer-badge-link');
+  const { createElement } = await import('react');
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const token = 'bbg_' + 'a'.repeat(43);
+  const hash = await hashBadgeToken(token);
+  const origin = 'https://product.example.test';
+  const handler = createFooterBadgeAutomationHandler({
+    tokenHash: () => hash,
+    siteOrigin: () => origin,
+    add: (item) => changeStoredFooterBadges({ action: 'add', badges: [item] }),
+    limit: () => null,
+  });
+  const install = () =>
+    handler({
+      request: new Request(origin + '/api/integrations/footer-badges', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Backlora-Site': origin,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'add', badge: badge('api') }),
+      }),
+    });
+  for (const response of await Promise.all([install(), install()])) {
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).data.installed, true);
+  }
+  const matching = (await stored()).filter(
+    (b: any) => b.href === badge('api').href
+  );
+  assert.equal(matching.length, 1);
+  const html = renderToStaticMarkup(
+    createElement(FooterBadgeLink, { badge: matching[0] })
+  );
+  assert.match(html, /href="https:\/\/api.example.test\/"/);
+  assert.match(html, /data-launchai-badge="verified"/);
+  assert.match(html, />api<\/a>/);
+});
