@@ -79,6 +79,18 @@ export class EvolinkProvider {
     return data;
   }
 
+  /** Read the provider balance without creating a billable task. */
+  async getCredits() {
+    const data = await this.request(`${this.baseUrl}/v1/credits`);
+    const user = data?.data?.user;
+    const remaining = Number(user?.remaining_credits);
+    const used = Number(user?.used_credits);
+    return {
+      remainingCredits: Number.isFinite(remaining) ? remaining : null,
+      usedCredits: Number.isFinite(used) ? used : null,
+    };
+  }
+
   /** Upload a data URL (or bare base64) and return its public URL. */
   async uploadBase64(base64Data: string, fileName?: string) {
     const data = await this.request(

@@ -7,6 +7,7 @@ import {
   DEFAULT_CLIP_LENGTH,
   isClipLength,
   resolveClipCreditsFor,
+  videoResolutionFor,
 } from '@/config/zombie-pricing';
 import {
   AITaskStatus,
@@ -25,12 +26,17 @@ import {
   fail,
   parseSceneInput,
   PIPELINE_MODEL,
+  sceneImageModel,
   submitScene,
   taskView,
   videoSceneQuality,
   videoSpecFor,
 } from './-pipeline';
-import { isOutOfFunds, SERVICE_BUSY } from './-provider-funds';
+import {
+  ensureProviderFunds,
+  isOutOfFunds,
+  SERVICE_BUSY,
+} from './-provider-funds';
 
 async function POST({ request }: { request: Request }) {
   try {
@@ -64,6 +70,14 @@ async function POST({ request }: { request: Request }) {
 
     const provider = evolinkFromConfigs(configs);
     if (!provider) return respErr('Generation is not configured');
+    if (
+      !(await ensureProviderFunds(provider, {
+        length,
+        resolution: videoResolutionFor(configs),
+      }))
+    ) {
+      return respErr(SERVICE_BUSY);
+    }
     const videoSpec = videoSpecFor(configs, length, memory, direction, style);
 
     const prompt = buildScenePrompt(direction, size, style);
@@ -82,7 +96,8 @@ async function POST({ request }: { request: Request }) {
         photos,
         prompt,
         size,
-        videoSceneQuality(configs)
+        videoSceneQuality(configs),
+        sceneImageModel(configs)
       );
       await mergeTaskInfo(task.id, { imageRequestId, videoSpec });
     } catch (error: any) {

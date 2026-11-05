@@ -956,6 +956,25 @@ export function getSettings(): Setting[] {
       tab: 'ai',
     },
     {
+      name: 'zombie_scene_model',
+      title: 'Scene image model',
+      type: 'select',
+      options: [
+        {
+          label:
+            'Seedream 5.0 Flash via Evolink (default, safer with portraits)',
+          value: 'doubao-seedream-5.0-flash',
+        },
+        {
+          label: 'GPT Image 2 via Evolink (may reject real-face references)',
+          value: 'gpt-image-2',
+        },
+      ],
+      tip: 'Seedream is the recommended scene model for uploaded portraits. It accepts reference images and avoids the content-policy failures seen with the previous GPT Image default.',
+      group: 'zombie',
+      tab: 'ai',
+    },
+    {
       name: 'zombie_video_resolution',
       title: 'Video resolution',
       type: 'select',

@@ -33,7 +33,11 @@ import {
   previewLimits,
   visitor,
 } from './-preview';
-import { SERVICE_BUSY, userFacingError } from './-provider-funds';
+import {
+  ensureProviderFunds,
+  SERVICE_BUSY,
+  userFacingError,
+} from './-provider-funds';
 
 type PreviewRow = NonNullable<Awaited<ReturnType<typeof findPreview>>>;
 
@@ -157,11 +161,15 @@ async function POST({ request }: { request: Request }) {
       return withDevice(respErr(quota.reason!), ids, request);
     }
 
-    // gpt-image-2 free stills default to its cheapest tier and the paid
-    // animate step re-renders them at video quality. Other models (Seedream)
-    // have one flat tier at full 720×1280, so the still is stored as 'high'
-    // and animated as-is — re-rendering a photoreal zombie face through
-    // gpt-image-2 gets blocked by its content filter.
+    const provider = evolinkFromConfigs(configs);
+    if (!provider) return respErr(FREE_PREVIEW_PAUSED);
+    if (!(await ensureProviderFunds(provider, { sceneOnly: true }))) {
+      return withDevice(respErr(SERVICE_BUSY), ids, request);
+    }
+
+    // Seedream has one flat quality tier at full 720×1280, so the still is
+    // stored as 'high' and animated as-is. Re-rendering a real face through
+    // gpt-image-2 is more likely to trigger the provider's safety filter.
     const model = previewImageModel(configs);
     const quality = !model.startsWith('gpt-image')
       ? 'high'
@@ -178,8 +186,6 @@ async function POST({ request }: { request: Request }) {
     });
 
     try {
-      const provider = evolinkFromConfigs(configs);
-      if (!provider) throw new Error(FREE_PREVIEW_PAUSED);
       const requestId = await submitScene(
         provider,
         input.photos,

@@ -7,6 +7,7 @@ import {
   DEFAULT_CLIP_LENGTH,
   isClipLength,
   resolveClipCreditsFor,
+  videoResolutionFor,
 } from '@/config/zombie-pricing';
 import {
   DEFAULT_CLIP_SIZE,
@@ -39,13 +40,18 @@ import {
   meetsQuality,
   PIPELINE_MODEL,
   REFINE_PROMPT,
+  sceneImageModel,
   submitScene,
   submitVideo,
   taskView,
   videoSceneQuality,
   videoSpecFor,
 } from './-pipeline';
-import { isOutOfFunds, SERVICE_BUSY } from './-provider-funds';
+import {
+  ensureProviderFunds,
+  isOutOfFunds,
+  SERVICE_BUSY,
+} from './-provider-funds';
 
 // Paid step for a free preview: re-render its still at video quality (skipped
 // if the preview already is that good), then make the video. Same price
@@ -94,13 +100,21 @@ async function POST({ request }: { request: Request }) {
     if (!isAdmin && (await getBalance(userId)) < price) {
       return respErr('Insufficient credits');
     }
-    const provider = evolinkFromConfigs(configs);
-    if (!provider) return respErr('Generation is not configured');
     const direction =
       typeof body?.direction === 'string' ? body.direction : undefined;
     if (isBlockedDirection(direction)) return respErr(DIRECTION_BLOCKED);
     if (!(await screenPrompt(direction, configs)).allowed) {
       return respErr(DIRECTION_BLOCKED);
+    }
+    const provider = evolinkFromConfigs(configs);
+    if (!provider) return respErr('Generation is not configured');
+    if (
+      !(await ensureProviderFunds(provider, {
+        length,
+        resolution: videoResolutionFor(configs),
+      }))
+    ) {
+      return respErr(SERVICE_BUSY);
     }
     // The preview's scene was composed for its style; the video must match.
     const videoSpec = videoSpecFor(
@@ -150,7 +164,8 @@ async function POST({ request }: { request: Request }) {
           [preview.sceneImageUrl],
           REFINE_PROMPT,
           size,
-          quality
+          quality,
+          sceneImageModel(configs)
         );
         await mergeTaskInfo(task.id, { imageRequestId, videoSpec });
       }

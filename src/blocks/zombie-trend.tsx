@@ -220,6 +220,7 @@ type FreeQuota = { left: number; reason: string | null };
 const FREE_PREVIEW_USED = 'FREE_PREVIEW_USED';
 const FREE_PREVIEW_PAUSED = 'FREE_PREVIEW_PAUSED';
 const DIRECTION_BLOCKED = 'DIRECTION_BLOCKED';
+const CONTENT_BLOCKED = 'CONTENT_BLOCKED';
 // Our provider account ran out of balance: not the visitor's fault.
 const SERVICE_BUSY = 'SERVICE_BUSY';
 
@@ -799,7 +800,9 @@ export function ZombieTrendPage() {
       ? null
       : e?.message === SERVICE_BUSY
         ? m['zombie.create.service_busy']()
-        : e?.message;
+        : e?.message === CONTENT_BLOCKED
+          ? m['zombie.create.content_blocked']()
+          : e?.message;
   const blockedNote =
     [generate.error, makePreview.error].some(
       (e) => e?.message === DIRECTION_BLOCKED
@@ -813,12 +816,16 @@ export function ZombieTrendPage() {
     (preview?.status === 'failed' && !taskId
       ? preview.error === SERVICE_BUSY
         ? m['zombie.create.service_busy_preview']()
-        : m['zombie.create.preview_failed']()
+        : preview.error === CONTENT_BLOCKED
+          ? m['zombie.create.content_blocked']()
+          : m['zombie.create.preview_failed']()
       : null) ??
     (task?.status === 'failed'
       ? task.error === SERVICE_BUSY
         ? m['zombie.create.service_busy']()
-        : m['zombie.create.video_failed']()
+        : task.error === CONTENT_BLOCKED
+          ? m['zombie.create.content_blocked']()
+          : m['zombie.create.video_failed']()
       : null) ??
     null;
   // The inline status line is easy to miss below the button; also toast.
