@@ -7,6 +7,7 @@ import { authClient, signIn, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import {
+  absoluteAuthCallbackUrl,
   AFTER_AUTH_HOME,
   resolveAfterAuthUrl,
   safeInternalPath,
@@ -132,7 +133,17 @@ function SignInPage() {
   });
 
   async function handleSocial(provider: 'google' | 'github') {
-    await signIn.social({ provider, callbackURL: afterLoginUrl });
+    setError('');
+    try {
+      const result = await signIn.social({
+        provider,
+        callbackURL: absoluteAuthCallbackUrl(afterLoginUrl),
+      });
+      if (!result.error) return;
+    } catch {
+      // A network failure may throw before Better Auth returns a result.
+    }
+    setError(m['common.sign.social_sign_in_failed']());
   }
 
   return (
@@ -169,7 +180,10 @@ function SignInPage() {
               >
                 <FieldGroup>
                   {error && (
-                    <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
+                    <div
+                      role="alert"
+                      className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm"
+                    >
                       {error}
                     </div>
                   )}

@@ -8,6 +8,7 @@ import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { apiPost } from '@/lib/api-client';
 import {
+  absoluteAuthCallbackUrl,
   AFTER_AUTH_HOME,
   resolveAfterAuthUrl,
   safeInternalPath,
@@ -165,10 +166,20 @@ function SignUpPage() {
   });
 
   async function handleSocial(provider: 'google' | 'github') {
+    setError('');
     // OAuth leaves the site, and the same button also signs existing users
     // in, so this is the intent, not a confirmed new account.
     track('sign_up_social_click', { method: provider });
-    await signIn.social({ provider, callbackURL: afterLoginUrl });
+    try {
+      const result = await signIn.social({
+        provider,
+        callbackURL: absoluteAuthCallbackUrl(afterLoginUrl),
+      });
+      if (!result.error) return;
+    } catch {
+      // A network failure may throw before Better Auth returns a result.
+    }
+    setError(m['common.sign.social_sign_in_failed']());
   }
 
   return (
@@ -211,7 +222,10 @@ function SignUpPage() {
               >
                 <FieldGroup>
                   {error && (
-                    <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
+                    <div
+                      role="alert"
+                      className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm"
+                    >
                       {error}
                     </div>
                   )}

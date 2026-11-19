@@ -24,6 +24,7 @@
   "common.sign.sign_out_title": "Sign Out",
   "common.sign.google_sign_in": "Sign in with Google",
   "common.sign.github_sign_in": "Sign in with GitHub",
+  "common.sign.social_sign_in_failed": "Couldn’t start sign-in. Please try again.",
   "common.sign.no_methods_title": "No sign-in methods available",
   "common.sign.no_methods_description": "The administrator hasn't enabled any sign-in methods yet. Please check back later.",
   "common.sign.forgot_password": "Forgot your password?",

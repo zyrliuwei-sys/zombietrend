@@ -12,7 +12,7 @@
  *   attaches the session token. Only schemes the admin allow-lists are honored.
  */
 
-import { deLocalizeHref } from '@/paraglide/runtime.js';
+import { deLocalizeHref, localizeHref } from '@/paraglide/runtime.js';
 
 // Never bounce back into an auth page — that loops.
 const AUTH_PATH_RE =
@@ -103,6 +103,15 @@ export function resolveAfterAuthUrl(params: {
   }
   return (
     safeInternalPath(callbackUrl) || safeInternalPath(redirect) || fallback
+  );
+}
+
+/** Better Auth accepts fragments in trusted absolute callback URLs. */
+export function absoluteAuthCallbackUrl(path: string): string {
+  const origin = window.location.origin;
+  const url = new URL(path, origin);
+  return localizeHref(
+    url.origin === origin ? url.href : `${origin}${AFTER_AUTH_HOME}`
   );
 }
 

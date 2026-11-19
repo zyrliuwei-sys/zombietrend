@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { getAuthClient, useSession } from '@/core/auth/client';
-import { currentPathWithQuery } from '@/lib/redirect';
 import { usePublicConfig } from '@/hooks/use-public-config';
 
 // Mounts the Google One Tap prompt for signed-out visitors when the
@@ -51,7 +50,7 @@ export function GoogleOneTap() {
     (client as any)
       .oneTap?.({
         // Stay put: One Tap fires on whatever page the visitor is reading.
-        callbackURL: currentPathWithQuery('/'),
+        callbackURL: window.location.href,
         onPromptNotification: () => {
           // Silently ignore dismissals / FedCM hiccups — the user can still
           // sign in via the normal /sign-in page.
